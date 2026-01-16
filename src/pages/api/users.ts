@@ -8,14 +8,17 @@ export const GET: APIRoute = async ({ url }) => {
   const sort = url.searchParams.get("sort") ?? "";
 
   // TODO: fetch from DB, file, etc.
-  const items = await listUsers({
+  const [sortKey, sortDir] = sort.includes(":") ? sort.split(":") : [sort, ""];
+  const resolvedSortKey = sortKey ? sortKey.replace(/^-/, "") : null;
+  const resolvedSortDir = sortKey.startsWith("-") ? "desc" : sortDir || "asc";
+  const result = await listUsers({
     page,
     pageSize,
     search,
-    sortKey: sort ? (sort.replace(/^-/, "") as any) : null,
-    sortDir: sort?.startsWith("-") ? "desc" : "asc",
-  }).then((result) => result.items);
-  const total = items.length;
+    sortKey: resolvedSortKey as any,
+    sortDir: resolvedSortDir === "desc" ? "desc" : "asc",
+  });
+  const { items, total } = result;
 
   return new Response(
     JSON.stringify({ data: { users: items }, meta: { total } }),
