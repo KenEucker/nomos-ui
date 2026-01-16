@@ -7,7 +7,6 @@
   import { onDestroy, onMount } from "svelte"
   import DataTable from "../components/DataTable.svelte"
   import { apiGet } from "../lib/api"
-  import { uiState } from "../lib/state"
   import type { ResourceDefinition } from "../lib/types"
 
   export let definition: ResourceDefinition
@@ -15,11 +14,10 @@
   type Row = Record<string, any>
 
   const tableIdPrefix = "resource"
-  $: tableId = `${tableIdPrefix}:${definition.name}`
 
   let items: Row[] = []
   let total = 0
-  let lastQuery = {
+  let query = {
     page: 1,
     pageSize: 20,
     search: "",
@@ -27,7 +25,6 @@
     sortDir: "asc" as "asc" | "desc",
   }
   let loading = false
-  let defaultsApplied = false
   let debounceId: ReturnType<typeof setTimeout> | null = null
   let requestId = 0
   let dataKey: string | undefined = definition.dataKey
@@ -57,7 +54,7 @@
     return { items, total }
   }
 
-  const buildUrl = (nextQuery = lastQuery) => {
+  const buildUrl = (nextQuery = query) => {
     const params = new URLSearchParams()
     params.set("page", String(nextQuery.page))
     params.set("pageSize", String(nextQuery.pageSize))
@@ -67,7 +64,7 @@
     return query ? `${definition.endpoints.list}?${query}` : definition.endpoints.list
   }
 
-  const fetchList = async (nextQuery = lastQuery) => {
+  const fetchList = async (nextQuery = query) => {
     const currentRequest = ++requestId
     loading = true
     try {
@@ -85,7 +82,7 @@
     }
   }
 
-  const scheduleFetch = (delayMs: number, nextQuery = lastQuery) => {
+  const scheduleFetch = (delayMs: number, nextQuery = query) => {
     if (debounceId) clearTimeout(debounceId)
     debounceId = setTimeout(() => {
       fetchList(nextQuery)
@@ -100,40 +97,26 @@
     sortDir: "asc" | "desc"
   }) => {
     if (debounceId) clearTimeout(debounceId)
-    const previousSearch = lastQuery.search
-    lastQuery = { ...nextQuery }
+    const previousSearch = query.search
+    query = { ...nextQuery }
 
-    if (previousSearch !== lastQuery.search) {
-      scheduleFetch(250, lastQuery)
+    if (previousSearch !== query.search) {
+      scheduleFetch(250, query)
       return
     }
 
-    await fetchList(lastQuery)
+    await fetchList(query)
   }
 
   onMount(() => {
-    if (!defaultsApplied) {
-      lastQuery = {
-        ...lastQuery,
-        pageSize: listConfig.pageSize ?? 20,
-        sortKey: listConfig.defaultSort?.key ?? null,
-        sortDir: listConfig.defaultSort?.direction ?? "asc",
-      }
-      defaultsApplied = true
+    query = {
+      ...query,
+      pageSize: listConfig.pageSize ?? 20,
+      sortKey: listConfig.defaultSort?.key ?? null,
+      sortDir: listConfig.defaultSort?.direction ?? "asc",
     }
 
-    uiState.resetTable(tableId)
-    uiState.setTablePage(tableId, lastQuery.page)
-    uiState.setTablePageSize(tableId, lastQuery.pageSize)
-
-    if (lastQuery.sortKey) {
-      uiState.toggleTableSort(tableId, lastQuery.sortKey)
-      if (lastQuery.sortDir === "desc") {
-        uiState.toggleTableSort(tableId, lastQuery.sortKey)
-      }
-    }
-
-    fetchList(lastQuery)
+    fetchList(query)
   })
 
   onDestroy(() => {
@@ -149,6 +132,8 @@
   emptyMessage={emptyMessage}
   dataKey={dataKey}
   rowIdKey={rowIdKey}
+  page={query.page}
+  pageSize={query.pageSize}
   total={total}
   loading={loading}
   showSearch={listConfig.searchable ?? false}
