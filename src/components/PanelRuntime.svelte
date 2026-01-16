@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LayoutNode, PanelModule } from "../lib/types"
+  import type { LayoutNode, PanelModule, PanelRenderContext } from "../lib/types"
   import { loadPanelById } from "../lib/loader"
   import { uiState } from "../lib/state"
   import { runMutation } from "../lib/mutations"
@@ -15,6 +15,7 @@
 
   export let initialData: any = null
   export let initialError: string | null = null
+  export let context: PanelRenderContext | undefined = undefined
 
   let panel: PanelModule<any> | null = null
   let loading = true
@@ -31,10 +32,10 @@
     }
 
     try {
-      // layout can optionally accept ctx; for now we only give minimal info
-      nodes = panel.layout.length >= 2
-        ? panel.layout(data, { url: window.location.href })
-        : panel.layout(data)
+      const fallbackUrl =
+        typeof window !== "undefined" ? new URL(window.location.href) : undefined
+      const renderCtx = context ?? { mode: "page", url: fallbackUrl }
+      nodes = panel.layout.length >= 2 ? panel.layout(data, renderCtx) : panel.layout(data)
     } catch (e: any) {
       error = e?.message ?? String(e)
       nodes = []
@@ -58,43 +59,25 @@
 
   $: if (panel && data && !error) computeNodes()
 
-  const normalize = (v: unknown) => String(v ?? "").toLowerCase()
+  const getAtPath = (current: any, path: string[]) =>
+    path.reduce((acc, key) => (acc == null ? undefined : acc[key]), current)
 
-  const matchesSearch = (row: Record<string, any>, search: string) => {
-    if (!search.trim()) return true
-    const q = search.trim().toLowerCase()
-    // simple: search across all visible values in row
-    return Object.values(row).some((v) => normalize(v).includes(q))
-  }
-
-  const compare = (a: any, b: any) => {
-    // numbers sort numerically, else string compare
-    const an = typeof a === "number" ? a : Number(a)
-    const bn = typeof b === "number" ? b : Number(b)
-    const aIsNum = !Number.isNaN(an) && a !== "" && a !== null && a !== undefined
-    const bIsNum = !Number.isNaN(bn) && b !== "" && b !== null && b !== undefined
-    if (aIsNum && bIsNum) return an - bn
-    return String(a ?? "").localeCompare(String(b ?? ""))
-  }
-
-  const deriveRows = (
-    rows: Array<Record<string, any>>,
-    tableState: { search: string; sortKey: string | null; sortDir: "asc" | "desc" }
-  ) => {
-    const filtered = rows.filter((r) => matchesSearch(r, tableState.search))
-
-    if (!tableState.sortKey) return filtered
-
-    const sorted = [...filtered].sort((ra, rb) => {
-      const res = compare(ra[tableState.sortKey!], rb[tableState.sortKey!])
-      return tableState.sortDir === "asc" ? res : -res
-    })
-
-    return sorted
+  const setAtPath = (current: any, path: string[], value: any) => {
+    if (path.length === 0) return value
+    const [key, ...rest] = path
+    const container = current ?? {}
+    const next = setAtPath(container?.[key], rest, value)
+    if (Array.isArray(container)) {
+      const copy = [...container]
+      copy[Number(key)] = next
+      return copy
+    }
+    return { ...container, [key]: next }
   }
 
   const patchRow = (current: any, dataKey: string, rowIdKey: string, row: any, patch: any) => {
-    const arr = current?.[dataKey]
+    const path = dataKey.split(".")
+    const arr = getAtPath(current, path)
     if (!Array.isArray(arr)) return current
 
     const targetId = row?.[rowIdKey]
@@ -102,7 +85,7 @@
         item?.[rowIdKey] === targetId ? { ...item, ...patch } : item
     )
 
-    return { ...current, [dataKey]: nextArr }
+    return setAtPath(current, path, nextArr)
   }
 
   init()

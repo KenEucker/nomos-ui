@@ -3,7 +3,7 @@ import type { PanelModule } from "../lib/types"
 
 type Data = {
   status: string
-  routes: Array<{ method: string; path: string }>
+  routes: Array<{ id: string; method: string; path: string }>
   jobs: Array<{ id: string; schedule?: string }>
 }
 
@@ -18,8 +18,8 @@ const diagnosticsPanel: PanelModule<Data> = {
     return {
       status: "OK",
       routes: [
-        { method: "GET", path: "/admin/hello" },
-        { method: "GET", path: "/admin/diagnostics" },
+        { id: "route-hello", method: "GET", path: "/admin/hello" },
+        { id: "route-diagnostics", method: "GET", path: "/admin/diagnostics" },
       ],
       jobs: [
         { id: "cleanup-temp", schedule: "0 * * * *" },
@@ -51,6 +51,8 @@ const diagnosticsPanel: PanelModule<Data> = {
           ],
           rows: data.routes,
           emptyMessage: "No routes.",
+          dataKey: "routes",
+          rowIdKey: "id",
         }),
       ]
     ),
@@ -67,6 +69,8 @@ const diagnosticsPanel: PanelModule<Data> = {
           ],
           rows: data.jobs,
           emptyMessage: "No jobs.",
+          dataKey: "jobs",
+          rowIdKey: "id",
         }),
       ]
     ),
