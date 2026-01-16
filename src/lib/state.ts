@@ -26,55 +26,60 @@ const defaultTableState = (): TableUiState => ({
 const createUiState = () => {
   const { subscribe, update } = writable<PanelUiState>({ tables: {} })
 
+  const updateTableState = (
+    s: PanelUiState,
+    tableId: string,
+    updater: (current: TableUiState) => TableUiState
+  ): PanelUiState => {
+    const current = s.tables[tableId] ?? defaultTableState()
+    const next = updater(current)
+    return { ...s, tables: { ...s.tables, [tableId]: next } }
+  }
+
   const ensureTable = (tableId: string) =>
     update((s) => {
-      if (!s.tables[tableId]) s.tables[tableId] = defaultTableState()
-      return s
+      if (s.tables[tableId]) return s
+      return { ...s, tables: { ...s.tables, [tableId]: defaultTableState() } }
     })
 
   const setTableSearch = (tableId: string, search: string) =>
-    update((s) => {
-      s.tables[tableId] ??= defaultTableState()
-      s.tables[tableId].search = search
-      s.tables[tableId].page = 1
-      return s
-    })
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        search,
+        page: 1,
+      }))
+    )
 
   const toggleTableSort = (tableId: string, key: string) =>
-    update((s) => {
-      s.tables[tableId] ??= defaultTableState()
-      const t = s.tables[tableId]
-
-      if (t.sortKey === key) {
-        t.sortDir = t.sortDir === "asc" ? "desc" : "asc"
-      } else {
-        t.sortKey = key
-        t.sortDir = "asc"
-      }
-
-      return s
-    })
+    update((s) =>
+      updateTableState(s, tableId, (current) => {
+        if (current.sortKey === key) {
+          return { ...current, sortDir: current.sortDir === "asc" ? "desc" : "asc" }
+        }
+        return { ...current, sortKey: key, sortDir: "asc" }
+      })
+    )
 
   const setTablePage = (tableId: string, page: number) =>
-    update((s) => {
-      s.tables[tableId] ??= defaultTableState()
-      s.tables[tableId].page = page
-      return s
-    })
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        page,
+      }))
+    )
 
   const setTablePageSize = (tableId: string, pageSize: number) =>
-    update((s) => {
-      s.tables[tableId] ??= defaultTableState()
-      s.tables[tableId].pageSize = pageSize
-      s.tables[tableId].page = 1
-      return s
-    })
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        pageSize,
+        page: 1,
+      }))
+    )
 
   const resetTable = (tableId: string) =>
-    update((s) => {
-      s.tables[tableId] = defaultTableState()
-      return s
-    })
+    update((s) => ({ ...s, tables: { ...s.tables, [tableId]: defaultTableState() } }))
 
   return {
     subscribe,
