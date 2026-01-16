@@ -21,14 +21,14 @@
     page: 1,
     pageSize: 20,
     search: "",
-    sortKey: definition.list?.defaultSort?.key ?? null,
-    sortDir: definition.list?.defaultSort?.direction ?? ("asc" as "asc" | "desc"),
+    sortKey: null as string | null,
+    sortDir: "asc" as "asc" | "desc",
   }
   let loading = false
   let debounceId: ReturnType<typeof setTimeout> | null = null
   let requestId = 0
-  let dataKey: string | undefined = definition.dataKey
-  let rowIdKey: string | undefined = definition.singleDataKey
+  $: dataKey = definition?.dataKey
+  $: rowIdKey = definition?.singleDataKey
 
   $: listConfig = definition.list ?? {}
   $: columns = listConfig.columns ?? []
@@ -71,8 +71,9 @@
       const response = await apiGet<any>(buildUrl(nextQuery))
       if (currentRequest !== requestId) return
       const { items: nextItems, total: nextTotal } = unwrapItems(response, definition.dataKey)
-      items = Array.isArray(nextItems) ? nextItems : []
-      total = typeof nextTotal === "number" ? nextTotal : 0
+      const resolvedItems = Array.isArray(nextItems) ? nextItems : []
+      items = [...resolvedItems]
+      total = typeof nextTotal === "number" ? nextTotal : resolvedItems.length
     } catch (error) {
       if (currentRequest !== requestId) return
       items = []
@@ -96,24 +97,26 @@
     sortKey: string | null
     sortDir: "asc" | "desc"
   }) => {
-    if (debounceId) clearTimeout(debounceId)
     const previousSearch = query.search
     query = { ...nextQuery }
+    const searchChanged = previousSearch !== query.search
 
-    if (previousSearch !== query.search) {
+    if (debounceId) clearTimeout(debounceId)
+
+    if (searchChanged) {
       scheduleFetch(250, query)
-      return
+    } else {
+      await fetchList(query)
     }
-
-    await fetchList(query)
   }
 
   onMount(() => {
     query = {
-      ...query,
+      page: 1,
       pageSize: listConfig.pageSize ?? 20,
-      sortKey: listConfig.defaultSort?.key ?? query.sortKey,
-      sortDir: listConfig.defaultSort?.direction ?? query.sortDir,
+      search: "",
+      sortKey: listConfig.defaultSort?.key ?? null,
+      sortDir: listConfig.defaultSort?.direction ?? "asc",
     }
 
     fetchList(query)
