@@ -20,12 +20,12 @@ type Data = {
 
 const rowActions: Array<PanelAction<Data>> = [
   {
-    id: "edit-user",
-    label: "Edit",
+    id: "view-user",
+    label: "View",
     variant: "secondary",
     run: ({ row, notify }) => {
       if (!row) return
-      notify(`Editing ${row.name}`, "info")
+      notify(`Viewing ${row.name}`, "info")
     },
   },
   {
@@ -88,107 +88,6 @@ const usersPanel: PanelModule<Data> = {
         }))
       },
     }),
-
-    Layouts.section(
-      { title: "Create user", description: "Invite a new team member." },
-      [
-        Layouts.form({
-          id: "create-user",
-          title: "New user",
-          description: "Validated with the panel schema.",
-          schema: userSchema,
-          submitLabel: "Create user",
-          fields: [
-            { name: "name", label: "Full name", type: "text", placeholder: "Ava Martins" },
-            { name: "email", label: "Email", type: "email", placeholder: "ava@nomos.io" },
-            {
-              name: "role",
-              label: "Role",
-              type: "relation",
-              loadOptions: listRoles,
-              placeholder: "Search roles…",
-            },
-            {
-              name: "teams",
-              label: "Teams",
-              type: "multiselect",
-              loadOptions: listTeams,
-              placeholder: "Search teams…",
-            },
-            {
-              name: "username",
-              label: "Username",
-              type: "lookup",
-              helperText: "Generate a suggested username.",
-              lookup: {
-                title: "Generate username",
-                description: "Derive a username from a display name.",
-                submitLabel: "Generate",
-                fields: [{ name: "name", label: "Display name" }],
-                onLookup: runUsernameLookup,
-                applyResult: (result) => ({ username: result.username }),
-              },
-            },
-          ],
-          onSubmit: async () => {
-            ctx?.notify?.("Invitation sent", "success")
-          },
-        }),
-      ]
-    ),
-
-    Layouts.section(
-      { title: "Edit user", description: "Update a user record." },
-      [
-        Layouts.form({
-          id: "edit-user",
-          title: "Edit profile",
-          description: "Uses the same validation schema.",
-          schema: userSchema,
-          submitLabel: "Save changes",
-          initialValues: {
-            name: data.users[0]?.name ?? "",
-            email: data.users[0]?.email ?? "",
-            role: data.users[0]?.role ?? "",
-            teams: [data.users[0]?.team ?? ""].filter(Boolean),
-            username: "user.primary",
-          },
-          fields: [
-            { name: "name", label: "Full name", type: "text" },
-            { name: "email", label: "Email", type: "email" },
-            {
-              name: "role",
-              label: "Role",
-              type: "relation",
-              loadOptions: listRoles,
-            },
-            {
-              name: "teams",
-              label: "Teams",
-              type: "multiselect",
-              loadOptions: listTeams,
-            },
-            {
-              name: "username",
-              label: "Username",
-              type: "lookup",
-              helperText: "Use lookup to regenerate username.",
-              lookup: {
-                title: "Regenerate username",
-                description: "Pick a new handle for this user.",
-                submitLabel: "Regenerate",
-                fields: [{ name: "name", label: "Display name" }],
-                onLookup: runUsernameLookup,
-                applyResult: (result) => ({ username: result.username }),
-              },
-            },
-          ],
-          onSubmit: async () => {
-            ctx?.notify?.("Profile updated", "success")
-          },
-        }),
-      ]
-    ),
   ],
 }
 
