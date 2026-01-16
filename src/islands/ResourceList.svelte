@@ -27,6 +27,8 @@
   let loading = false
   let debounceId: ReturnType<typeof setTimeout> | null = null
   let requestId = 0
+  let lastQueryKey = ""
+  let lastSearch = ""
   let dataKey: string | undefined = definition.dataKey
   let rowIdKey: string | undefined = definition.singleDataKey
 
@@ -96,16 +98,7 @@
     sortKey: string | null
     sortDir: "asc" | "desc"
   }) => {
-    if (debounceId) clearTimeout(debounceId)
-    const previousSearch = query.search
     query = { ...nextQuery }
-
-    if (previousSearch !== query.search) {
-      scheduleFetch(250, query)
-      return
-    }
-
-    await fetchList(query)
   }
 
   onMount(() => {
@@ -115,9 +108,22 @@
       sortKey: listConfig.defaultSort?.key ?? null,
       sortDir: listConfig.defaultSort?.direction ?? "asc",
     }
-
-    fetchList(query)
   })
+
+  $: if (query) {
+    const nextKey = JSON.stringify(query)
+    if (nextKey !== lastQueryKey) {
+      lastQueryKey = nextKey
+      if (debounceId) clearTimeout(debounceId)
+      if (lastSearch !== query.search) {
+        lastSearch = query.search
+        scheduleFetch(250, query)
+      } else {
+        lastSearch = query.search
+        fetchList(query)
+      }
+    }
+  }
 
   onDestroy(() => {
     if (debounceId) clearTimeout(debounceId)
