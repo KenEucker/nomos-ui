@@ -26,11 +26,11 @@ export const usersResource: ResourceDefinition = createResourceDefinition({
   },
 
   endpoints: {
-    list: "/users",
-    get: "/users/{id}",
-    create: "/users",
-    update: "/users/{id}",
-    delete: "/users/{id}",
+    list: "/api/users",
+    get: "/api/users/{id}",
+    create: "/api/users",
+    update: "/api/users/{id}",
+    delete: "/api/users/{id}",
   },
 
   // Response unwrapping keys (adjust if your API uses different keys)
