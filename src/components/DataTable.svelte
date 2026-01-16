@@ -28,6 +28,11 @@
   export let rows: TableNode["props"]["rows"]
   export let emptyMessage: string | undefined = undefined
   export let rowActions: PanelAction[] | undefined = undefined
+  export let showSearch: boolean = true
+  export let searchPlaceholder: string = "Search…"
+  export let showSelection: boolean = true
+  export let showActions: boolean = true
+  export let enableEdit: boolean = true
 
   // metadata for deterministic patching
   export let dataKey: string | undefined = undefined
@@ -67,6 +72,8 @@
     | undefined = undefined
 
   $: tableId = `${tableIdPrefix}:${id ?? title}`
+  $: actionColumnVisible = showActions && (enableEdit || (rowActions?.length ?? 0) > 0)
+  $: columnCount = columns.length + (showSelection ? 1 : 0) + (actionColumnVisible ? 1 : 0)
 
   // ---- Search / Sort helpers ----
   const normalize = (v: unknown) => String(v ?? "").toLowerCase()
@@ -225,17 +232,20 @@
         {/if}
       </div>
 
-      <div class="w-64">
-        <Input
-          value={tableState.search}
-          placeholder="Search…"
-          oninput={async (e) => {
-            const nextSearch = (e.currentTarget as HTMLInputElement).value
-            uiState.setTableSearch(tableId, nextSearch)
-            await triggerQueryChange({ page: 1, search: nextSearch })
-          }}
-        />
-      </div>
+      {#if showSearch}
+        <div class="w-64">
+          <Input
+            value={tableState.search}
+            placeholder={searchPlaceholder}
+            disabled={loading}
+            oninput={async (e) => {
+              const nextSearch = (e.currentTarget as HTMLInputElement).value
+              uiState.setTableSearch(tableId, nextSearch)
+              await triggerQueryChange({ page: 1, search: nextSearch })
+            }}
+          />
+        </div>
+      {/if}
     </div>
   </CardHeader>
 
@@ -244,85 +254,105 @@
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="w-10"></TableHead>
+            {#if showSelection}
+              <TableHead class="w-10"></TableHead>
+            {/if}
 
             {#each columns as col (col.key)}
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  class="h-8 px-2 -ml-2"
-                  onclick={async () => {
-                    const nextSortDir =
-                      tableState.sortKey === col.key
-                        ? tableState.sortDir === "asc"
-                          ? "desc"
+              <TableHead class={col.hideOnMobile ? "hidden sm:table-cell" : ""}>
+                {#if col.sortable}
+                  <Button
+                    variant="ghost"
+                    class="h-8 px-2 -ml-2"
+                    disabled={loading}
+                    onclick={async () => {
+                      const nextSortDir =
+                        tableState.sortKey === col.key
+                          ? tableState.sortDir === "asc"
+                            ? "desc"
+                            : "asc"
                           : "asc"
-                        : "asc"
-                    uiState.toggleTableSort(tableId, col.key)
-                    await triggerQueryChange({ sortKey: col.key, sortDir: nextSortDir })
-                  }}
-                >
-                  {col.label}
-                  {#if tableState.sortKey === col.key}
-                    <span class="ml-2 text-xs text-muted-foreground">
-                      {tableState.sortDir === "asc" ? "▲" : "▼"}
-                    </span>
-                  {/if}
-                </Button>
+                      uiState.toggleTableSort(tableId, col.key)
+                      uiState.setTablePage(tableId, 1)
+                      await triggerQueryChange({ page: 1, sortKey: col.key, sortDir: nextSortDir })
+                    }}
+                  >
+                    {col.label}
+                    {#if tableState.sortKey === col.key}
+                      <span class="ml-2 text-xs text-muted-foreground">
+                        {tableState.sortDir === "asc" ? "▲" : "▼"}
+                      </span>
+                    {/if}
+                  </Button>
+                {:else}
+                  <span class="text-sm font-medium">{col.label}</span>
+                {/if}
               </TableHead>
             {/each}
 
-            <TableHead class="w-32 text-right">Actions</TableHead>
+            {#if actionColumnVisible}
+              <TableHead class="w-32 text-right">Actions</TableHead>
+            {/if}
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {#if displayRows.length === 0}
             <TableRow>
-              <TableCell colspan={columns.length + 2} class="text-muted-foreground">
+              <TableCell colspan={columnCount} class="text-muted-foreground">
                 {emptyMessage ?? "No data."}
               </TableCell>
             </TableRow>
           {:else}
           {#each paginatedRows as row, rIdx (pageStart + rIdx)}
               <TableRow class={selectedIds.has(getRowId(row, pageStart + rIdx)) ? "bg-muted/40" : ""}>
-                <TableCell>
-                  <!-- avoid Checkbox custom events: use button for a11y -->
-                  <button
-                    type="button"
-                    class="inline-flex items-center"
-                    onclick={() => toggleSelected(rIdx)}
-                    aria-pressed={selectedIds.has(getRowId(row, pageStart + rIdx))}
-                  >
-                    <Checkbox
-                      checked={selectedIds.has(getRowId(row, pageStart + rIdx))}
-                      aria-label="Select row"
-                    />
-                  </button>
-                </TableCell>
+                {#if showSelection}
+                  <TableCell>
+                    <!-- avoid Checkbox custom events: use button for a11y -->
+                    <button
+                      type="button"
+                      class="inline-flex items-center"
+                      onclick={() => toggleSelected(rIdx)}
+                      aria-pressed={selectedIds.has(getRowId(row, pageStart + rIdx))}
+                      disabled={loading}
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(getRowId(row, pageStart + rIdx))}
+                        aria-label="Select row"
+                      />
+                    </button>
+                  </TableCell>
+                {/if}
 
                 {#each columns as col (col.key)}
-                  <TableCell>{String(row[col.key] ?? "")}</TableCell>
+                  <TableCell class={col.hideOnMobile ? "hidden sm:table-cell" : ""}>
+                    {String(row[col.key] ?? "")}
+                  </TableCell>
                 {/each}
 
-                <TableCell class="text-right">
-                  <div class="flex justify-end gap-2">
-                    {#if rowActions?.length}
-                      {#each rowActions as action (action.id)}
-                        <Button
-                          size="sm"
-                          variant={action.variant ?? "secondary"}
-                          onclick={() => onRowAction?.(action, row)}
-                        >
-                          {action.label}
+                {#if actionColumnVisible}
+                  <TableCell class="text-right">
+                    <div class="flex justify-end gap-2">
+                      {#if rowActions?.length}
+                        {#each rowActions as action (action.id)}
+                          <Button
+                            size="sm"
+                            variant={action.variant ?? "secondary"}
+                            onclick={() => onRowAction?.(action, row)}
+                            disabled={loading}
+                          >
+                            {action.label}
+                          </Button>
+                        {/each}
+                      {/if}
+                      {#if enableEdit}
+                        <Button size="sm" variant="secondary" onclick={() => openEdit(row, rIdx)} disabled={loading}>
+                          Edit
                         </Button>
-                      {/each}
-                    {/if}
-                    <Button size="sm" variant="secondary" onclick={() => openEdit(row, rIdx)}>
-                      Edit
-                    </Button>
-                  </div>
-                </TableCell>
+                      {/if}
+                    </div>
+                  </TableCell>
+                {/if}
               </TableRow>
             {/each}
           {/if}
@@ -344,14 +374,19 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="ghost" onclick={() => setPage(effectivePage - 1)} disabled={effectivePage <= 1}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onclick={() => setPage(effectivePage - 1)}
+            disabled={loading || effectivePage <= 1}
+          >
             Previous
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onclick={() => setPage(effectivePage + 1)}
-            disabled={effectivePage >= totalPages}
+            disabled={loading || effectivePage >= totalPages}
           >
             Next
           </Button>
@@ -361,12 +396,14 @@
               class="w-16"
               value={String(effectivePage)}
               onblur={(e) => setPage(Number((e.currentTarget as HTMLInputElement).value))}
+              disabled={loading}
             />
           </div>
           <select
             class="rounded-md border border-input bg-background px-2 py-1 text-xs"
             oninput={(e) => setPageSize(Number((e.currentTarget as HTMLSelectElement).value))}
             value={String(effectivePageSize)}
+            disabled={loading}
           >
             <option value="5">5 / page</option>
             <option value="10">10 / page</option>
@@ -375,36 +412,38 @@
         </div>
       </div>
 
-      <Dialog.Root bind:open={dialogOpen}>
-        <Dialog.Content class="sm:max-w-lg">
-          <Dialog.Header>
-            <Dialog.Title>Edit</Dialog.Title>
-            <Dialog.Description>Update fields and save.</Dialog.Description>
-          </Dialog.Header>
+      {#if enableEdit}
+        <Dialog.Root bind:open={dialogOpen}>
+          <Dialog.Content class="sm:max-w-lg">
+            <Dialog.Header>
+              <Dialog.Title>Edit</Dialog.Title>
+              <Dialog.Description>Update fields and save.</Dialog.Description>
+            </Dialog.Header>
 
-          {#if editDraft}
-            <div class="space-y-4 py-2">
-              {#each columns as col (col.key)}
-                <div class="space-y-1">
-                  <div class="text-sm font-medium">{col.label}</div>
-                  <Input
-                    value={String(editDraft[col.key] ?? "")}
-                    oninput={(e) => {
-                      const v = (e.currentTarget as HTMLInputElement).value
-                      editDraft = { ...editDraft, [col.key]: v }
-                    }}
-                  />
-                </div>
-              {/each}
-            </div>
-          {/if}
+            {#if editDraft}
+              <div class="space-y-4 py-2">
+                {#each columns as col (col.key)}
+                  <div class="space-y-1">
+                    <div class="text-sm font-medium">{col.label}</div>
+                    <Input
+                      value={String(editDraft[col.key] ?? "")}
+                      oninput={(e) => {
+                        const v = (e.currentTarget as HTMLInputElement).value
+                        editDraft = { ...editDraft, [col.key]: v }
+                      }}
+                    />
+                  </div>
+                {/each}
+              </div>
+            {/if}
 
-          <Dialog.Footer class="gap-2">
-            <Button variant="ghost" onclick={() => (dialogOpen = false)}>Cancel</Button>
-            <Button onclick={saveEdit}>Save</Button>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Root>
+            <Dialog.Footer class="gap-2">
+              <Button variant="ghost" onclick={() => (dialogOpen = false)}>Cancel</Button>
+              <Button onclick={saveEdit}>Save</Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+      {/if}
     </div>
   </CardContent>
 </Card>

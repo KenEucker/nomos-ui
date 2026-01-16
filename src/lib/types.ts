@@ -66,7 +66,7 @@ export type TableNode = {
     id?: string
     title: string
     description?: string
-    columns: Array<{ key: string; label: string }>
+    columns: ColumnDef[]
     rows: Array<Record<string, string | number | boolean | null | undefined>>
     emptyMessage?: string
     dataKey?: string
