@@ -1,11 +1,16 @@
 ---
-import type { PanelCtx, PanelModule } from "../lib/types"
+import type { PanelCtx, PanelModule, PanelRenderContext } from "../lib/types"
 import PanelRuntime from "./PanelRuntime.svelte"
 
 const { panel } = Astro.props as { panel: PanelModule<any> }
 
 const ctx: PanelCtx = {
   request: Astro.request,
+  url: Astro.url,
+}
+
+const renderCtx: PanelRenderContext = {
+  mode: "page",
   url: Astro.url,
 }
 
@@ -30,4 +35,5 @@ try {
   subtitle={panel.subtitle}
   initialData={initialData}
   initialError={initialError}
+  context={renderCtx}
 />

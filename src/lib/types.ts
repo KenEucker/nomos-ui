@@ -4,13 +4,21 @@ export type PanelCtx = {
   url: URL
 }
 
+export type PanelRenderContext = {
+  mode?: "page" | "embed" | "modal"
+  parentPanelId?: string
+  close?: () => void
+  params?: Record<string, string>
+  url?: URL | string
+}
+
 export type PanelModule<TData = unknown> = {
   id: string
   title: string
   subtitle?: string
 
   query: (ctx: PanelCtx) => Promise<TData>
-  layout: (data: TData, ctx: PanelCtx) => LayoutNode[]
+  layout: (data: TData, ctx?: PanelRenderContext) => LayoutNode[]
 }
 
 export type CardNode = {

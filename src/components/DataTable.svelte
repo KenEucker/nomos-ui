@@ -34,7 +34,7 @@
 
   // ✅ Svelte 5-forward “events”: callback props
   export let onSelect:
-    | ((info: { tableId: string; row: Row | null }) => void)
+    | ((info: { tableId: string; rows: Row[]; rowIds: Array<string | number> }) => void)
     | undefined = undefined
 
   export let onSave:
@@ -88,16 +88,40 @@
   $: displayRows = deriveRows((rows ?? []) as Row[], tableState)
 
   // ---- Selection + Dialog ----
-  let selectedIndex: number | null = null
-  $: selectedRow = selectedIndex != null ? displayRows[selectedIndex] : null
-  $: onSelect?.({ tableId, row: selectedRow ?? null })
+  const getRowId = (row: Row, idx: number) =>
+    rowIdKey && row?.[rowIdKey] != null ? (row[rowIdKey] as string | number) : idx
+
+  let selectedIds = new Set<string | number>()
+  $: selectedRows = displayRows.reduce<Row[]>((acc, row, idx) => {
+    if (selectedIds.has(getRowId(row, idx))) acc.push(row)
+    return acc
+  }, [])
+  $: selectedRowIds = displayRows.reduce<Array<string | number>>((acc, row, idx) => {
+    const id = getRowId(row, idx)
+    if (selectedIds.has(id)) acc.push(id)
+    return acc
+  }, [])
+  $: onSelect?.({
+    tableId,
+    rows: selectedRows,
+    rowIds: selectedRowIds,
+  })
 
   let dialogOpen = false
   let editIndex: number | null = null
   let editDraft: Row | null = null
 
   const toggleSelected = (idx: number) => {
-    selectedIndex = selectedIndex === idx ? null : idx
+    const row = displayRows[idx]
+    if (!row) return
+    const id = getRowId(row, idx)
+    const next = new Set(selectedIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
+    selectedIds = next
   }
 
   const openEdit = (row: Row, idx: number) => {
@@ -183,12 +207,17 @@
             </TableRow>
           {:else}
             {#each displayRows as row, rIdx (rIdx)}
-              <TableRow class={selectedIndex === rIdx ? "bg-muted/40" : ""}>
+              <TableRow class={selectedIds.has(getRowId(row, rIdx)) ? "bg-muted/40" : ""}>
                 <TableCell>
-                  <!-- avoid Checkbox custom events: click wrapper -->
-                  <div class="inline-flex items-center" onclick={() => toggleSelected(rIdx)}>
-                    <Checkbox checked={selectedIndex === rIdx} aria-label="Select row"  />
-                  </div>
+                  <!-- avoid Checkbox custom events: use button for a11y -->
+                  <button
+                    type="button"
+                    class="inline-flex items-center"
+                    onclick={() => toggleSelected(rIdx)}
+                    aria-pressed={selectedIds.has(getRowId(row, rIdx))}
+                  >
+                    <Checkbox checked={selectedIds.has(getRowId(row, rIdx))} aria-label="Select row" />
+                  </button>
                 </TableCell>
 
                 {#each columns as col (col.key)}
