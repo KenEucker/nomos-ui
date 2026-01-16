@@ -2,7 +2,7 @@
 	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
 	import type { WithoutChildren } from "bits-ui";
 	import { getEmblaContext } from "./context.js";
-	import { cn } from "$lib/utils.js";
+	import { cn } from "../../../lib/utils.js";
 	import { Button, type Props } from "$/../components/ui/button/index.js";
 
 	let {

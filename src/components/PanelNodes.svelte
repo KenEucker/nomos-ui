@@ -3,11 +3,11 @@
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card"
   import { Button } from "./ui/button"
   import DataTable from "./DataTable.svelte"
-  import CardGrid from "./CardGrid.svelte"
+  import CardGrid from "./layouts/CardGrid.svelte"
   import ErrorBox from "./ErrorBox.svelte"
   import TimeSeriesChart from "./TimeSeriesChart.svelte"
   import FormPanel from "./forms/FormPanel.svelte"
-  import TabPanel from "./TabPanel.svelte"
+  import TabPanel from "./layouts/TabPanel.svelte"
 
   export let nodes: LayoutNode[] = []
   export let panelId: string

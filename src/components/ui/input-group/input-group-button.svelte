@@ -20,7 +20,7 @@
 </script>
 
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
+	import { cn } from "../../../lib/utils.js";
 	import type { ComponentProps } from "svelte";
 	import { Button } from "$/../components/ui/button/index.js";
 

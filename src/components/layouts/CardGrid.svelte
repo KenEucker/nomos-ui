@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card"
-  import { Button } from "./ui/button"
-  import type { PanelAction } from "../lib/types"
+  import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card"
+  import { Button } from "../ui/button"
+  import type { PanelAction } from "../../lib/types"
 
   export type CardGridItem = {
     title: string

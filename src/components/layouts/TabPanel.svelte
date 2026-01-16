@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Tabs, TabsList, TabsTrigger } from "./ui/tabs"
+  import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
   import { onMount } from "svelte"
 
   export type TabConfig = {
