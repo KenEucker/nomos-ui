@@ -1,15 +1,9 @@
-import { z } from "zod"
-import { Layouts } from "../lib/layouts"
-import type { PanelAction, PanelModule } from "../lib/types"
-import { listRoles, listTeams, listUsers, runUsernameLookup, type User } from "../services/users"
+import { Layouts } from "../../lib/layouts"
+import type { PanelAction, PanelModule } from "../../lib/types"
+import { listRoles, listTeams, listUsers, runUsernameLookup, type User } from "../../services/users"
+import { usersResource } from "./users.resource"
 
-const userSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Enter a valid email"),
-  role: z.string().min(1, "Pick a role"),
-  teams: z.array(z.string()).min(1, "Select at least one team"),
-  username: z.string().min(3, "Username is required"),
-})
+const userSchema = usersResource.schema
 
 type Data = {
   users: User[]
