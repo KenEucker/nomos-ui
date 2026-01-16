@@ -166,3 +166,83 @@ export type LayoutNode =
   | TimeSeriesNode
   | FormNode
   | TabPanelNode
+
+export type ColumnDef = {
+  key: string
+  label: string
+  sortable?: boolean
+}
+
+export type FieldDef = {
+  name: string
+  label: string
+  type:
+    | "text"
+    | "textarea"
+    | "email"
+    | "password"
+    | "number"
+    | "checkbox"
+    | "select"
+    | "multiselect"
+    | "date"
+  placeholder?: string
+  helperText?: string
+  options?: Array<{ value: string; label: string }>
+  required?: boolean
+}
+
+export type ResourceEndpoints = {
+  list: string
+  get: string
+  create: string
+  update: string
+  delete: string
+}
+
+export type ResourceLabels =
+  | {
+      label?: string
+      labelPlural?: string
+      labels?: never
+    }
+  | {
+      label?: never
+      labelPlural?: never
+      labels: {
+        label: string
+        labelPlural: string
+      }
+    }
+
+export type ResourceMenu = {
+  group?: string
+  order?: number
+  icon?: string
+}
+
+export type ResourceListConfig = {
+  columns?: ColumnDef[]
+  defaultSort?: {
+    key: string
+    direction: "asc" | "desc"
+  }
+  searchable?: boolean
+  searchPlaceholder?: string
+  pageSize?: number
+}
+
+export type ResourceFormConfig = {
+  fields?: FieldDef[]
+}
+
+export type ResourceInput = ResourceLabels & {
+  identity: string
+  endpoints: ResourceEndpoints
+  menu?: ResourceMenu
+  list?: ResourceListConfig
+  form?: ResourceFormConfig
+  requiredPermission?: string
+  dataKey?: string
+  singleDataKey?: string
+}
