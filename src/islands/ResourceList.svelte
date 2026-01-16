@@ -19,11 +19,13 @@
 
   let items: Row[] = []
   let total = 0
-  let page = 1
-  let pageSize = 20
-  let search = ""
-  let sortKey: string | null = null
-  let sortDir: "asc" | "desc" = "asc"
+  let query = {
+    page: 1,
+    pageSize: 20,
+    search: "",
+    sortKey: null as string | null,
+    sortDir: "asc" as "asc" | "desc",
+  }
   let loading = false
   let defaultsApplied = false
   let debounceId: ReturnType<typeof setTimeout> | null = null
@@ -55,21 +57,21 @@
     return { items, total }
   }
 
-  const buildUrl = () => {
+  const buildUrl = (nextQuery = query) => {
     const params = new URLSearchParams()
-    params.set("page", String(page))
-    params.set("pageSize", String(pageSize))
-    if (search.trim()) params.set("search", search.trim())
-    if (sortKey) params.set("sort", `${sortKey}:${sortDir}`)
+    params.set("page", String(nextQuery.page))
+    params.set("pageSize", String(nextQuery.pageSize))
+    if (nextQuery.search.trim()) params.set("search", nextQuery.search.trim())
+    if (nextQuery.sortKey) params.set("sort", `${nextQuery.sortKey}:${nextQuery.sortDir}`)
     const query = params.toString()
     return query ? `${definition.endpoints.list}?${query}` : definition.endpoints.list
   }
 
-  const fetchList = async () => {
+  const fetchList = async (nextQuery = query) => {
     const currentRequest = ++requestId
     loading = true
     try {
-      const response = await apiGet<any>(buildUrl())
+      const response = await apiGet<any>(buildUrl(nextQuery))
       if (currentRequest !== requestId) return
       const { items: nextItems, total: nextTotal } = unwrapItems(response, definition.dataKey)
       items = nextItems
@@ -83,14 +85,14 @@
     }
   }
 
-  const scheduleFetch = (delayMs: number) => {
+  const scheduleFetch = (delayMs: number, nextQuery = query) => {
     if (debounceId) clearTimeout(debounceId)
     debounceId = setTimeout(() => {
-      fetchList()
+      fetchList(nextQuery)
     }, delayMs)
   }
 
-  const handleQueryChange = async (query: {
+  const handleQueryChange = async (nextQuery: {
     page: number
     pageSize: number
     search: string
@@ -98,40 +100,39 @@
     sortDir: "asc" | "desc"
   }) => {
     if (debounceId) clearTimeout(debounceId)
-    const previousSearch = search
-    page = query.page
-    pageSize = query.pageSize
-    search = query.search
-    sortKey = query.sortKey
-    sortDir = query.sortDir
+    const previousSearch = query.search
+    query = { ...nextQuery }
 
-    if (previousSearch !== search) {
-      scheduleFetch(250)
+    if (previousSearch !== query.search) {
+      scheduleFetch(250, query)
       return
     }
 
-    await fetchList()
+    await fetchList(query)
   }
 
   onMount(() => {
     if (!defaultsApplied) {
-      pageSize = listConfig.pageSize ?? 20
-      sortKey = listConfig.defaultSort?.key ?? null
-      sortDir = listConfig.defaultSort?.direction ?? "asc"
+      query = {
+        ...query,
+        pageSize: listConfig.pageSize ?? 20,
+        sortKey: listConfig.defaultSort?.key ?? null,
+        sortDir: listConfig.defaultSort?.direction ?? "asc",
+      }
       defaultsApplied = true
     }
 
     uiState.resetTable(tableId)
-    uiState.setTablePageSize(tableId, pageSize)
+    uiState.setTablePageSize(tableId, query.pageSize)
 
-    if (sortKey) {
-      uiState.toggleTableSort(tableId, sortKey)
-      if (sortDir === "desc") {
-        uiState.toggleTableSort(tableId, sortKey)
+    if (query.sortKey) {
+      uiState.toggleTableSort(tableId, query.sortKey)
+      if (query.sortDir === "desc") {
+        uiState.toggleTableSort(tableId, query.sortKey)
       }
     }
 
-    fetchList()
+    fetchList(query)
   })
 
   onDestroy(() => {
@@ -147,8 +148,8 @@
   emptyMessage={emptyMessage}
   dataKey={dataKey}
   rowIdKey={rowIdKey}
-  page={page}
-  pageSize={pageSize}
+  page={query.page}
+  pageSize={query.pageSize}
   total={total}
   loading={loading}
   showSearch={listConfig.searchable ?? false}
