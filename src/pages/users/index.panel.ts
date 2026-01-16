@@ -1,9 +1,15 @@
 import { Layouts } from "../../lib/layouts"
-import type { PanelAction, PanelModule } from "../../lib/types"
+import type { PanelAction, PanelModule, ResourceDefinition } from "../../lib/types"
 import { listUsers, type User } from "../../services/users"
 import { usersResource } from "../resources/users.resource"
 
 const userSchema = usersResource.schema
+const listConfig = usersResource.list ?? {}
+
+const getLabelPlural = (resource: ResourceDefinition) => {
+  if ("labels" in resource && resource.labels) return resource.labels.labelPlural
+  return resource.labelPlural ?? resource.label ?? resource.name
+}
 
 type Data = {
   users: User[]
@@ -51,7 +57,13 @@ const usersPanel: PanelModule<Data> = {
   schema: userSchema,
 
   load: async () => {
-    const query = { page: 1, pageSize: 5, search: "", sortKey: null, sortDir: "asc" as const }
+    const query = {
+      page: 1,
+      pageSize: listConfig.pageSize ?? 20,
+      search: "",
+      sortKey: (listConfig.defaultSort?.key as keyof User | undefined) ?? null,
+      sortDir: listConfig.defaultSort?.direction ?? ("asc" as const),
+    }
     const result = await listUsers(query)
     return { users: result.items, total: result.total, query, loading: false }
   },
@@ -59,15 +71,9 @@ const usersPanel: PanelModule<Data> = {
   layout: (data, ctx) => [
     Layouts.table({
       id: "users",
-      title: "Directory",
+      title: getLabelPlural(usersResource),
       description: "Search, sort, and paginate through users.",
-      columns: [
-        { key: "name", label: "Name" },
-        { key: "email", label: "Email" },
-        { key: "role", label: "Role" },
-        { key: "team", label: "Team" },
-        { key: "status", label: "Status" },
-      ],
+      columns: listConfig.columns ?? [],
       rows: data.users,
       emptyMessage: "No users found.",
       rowIdKey: "id",
