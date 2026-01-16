@@ -1,0 +1,33 @@
+---
+import type { PanelCtx, PanelModule } from "../lib/types"
+import PanelRuntime from "./PanelRuntime.svelte"
+
+const { panel } = Astro.props as { panel: PanelModule<any> }
+
+const ctx: PanelCtx = {
+  request: Astro.request,
+  url: Astro.url,
+}
+
+let initialData: any = null
+let initialError: string | null = null
+
+try {
+  initialData = await panel.query(ctx)
+} catch (e: any) {
+  initialError = e?.message ?? String(e)
+}
+---
+
+<!--
+  PanelRuntime is THE island.
+  Everything interactive lives inside it.
+-->
+<PanelRuntime
+  client:load
+  panelId={panel.id}
+  title={panel.title}
+  subtitle={panel.subtitle}
+  initialData={initialData}
+  initialError={initialError}
+/>
