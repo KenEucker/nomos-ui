@@ -192,7 +192,7 @@ export type FieldDef = {
   required?: boolean
 }
 
-export type AdminResourceEndpoints = {
+export type ResourceEndpoints = {
   list: string
   get: string
   create: string
@@ -200,7 +200,7 @@ export type AdminResourceEndpoints = {
   delete: string
 }
 
-export type AdminResourceLabels =
+export type ResourceLabels =
   | {
       label?: string
       labelPlural?: string
@@ -215,13 +215,13 @@ export type AdminResourceLabels =
       }
     }
 
-export type AdminResourceMenu = {
+export type ResourceMenu = {
   group?: string
   order?: number
   icon?: string
 }
 
-export type AdminResourceListConfig = {
+export type ResourceListConfig = {
   columns?: ColumnDef[]
   defaultSort?: {
     key: string
@@ -232,16 +232,16 @@ export type AdminResourceListConfig = {
   pageSize?: number
 }
 
-export type AdminResourceFormConfig = {
+export type ResourceFormConfig = {
   fields?: FieldDef[]
 }
 
-export type AdminResourceInput = AdminResourceLabels & {
+export type ResourceInput = ResourceLabels & {
   identity: string
-  endpoints: AdminResourceEndpoints
-  menu?: AdminResourceMenu
-  list?: AdminResourceListConfig
-  form?: AdminResourceFormConfig
+  endpoints: ResourceEndpoints
+  menu?: ResourceMenu
+  list?: ResourceListConfig
+  form?: ResourceFormConfig
   requiredPermission?: string
   dataKey?: string
   singleDataKey?: string
