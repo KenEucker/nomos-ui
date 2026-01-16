@@ -111,6 +111,10 @@
     ? ((rows ?? []) as Row[])
     : deriveRows((rows ?? []) as Row[], tableState)
   $: totalPages = Math.max(1, Math.ceil((total ?? displayRows.length) / effectivePageSize))
+  $: pageStart = (effectivePage - 1) * effectivePageSize
+  $: paginatedRows = onQueryChange
+    ? displayRows
+    : displayRows.slice(pageStart, pageStart + effectivePageSize)
 
   $: if (page != null && page !== tableState.page) {
     uiState.setTablePage(tableId, page)
@@ -125,12 +129,13 @@
     rowIdKey && row?.[rowIdKey] != null ? (row[rowIdKey] as string | number) : idx
 
   let selectedIds = new Set<string | number>()
+  $: selectionOffset = onQueryChange ? pageStart : 0
   $: selectedRows = displayRows.reduce<Row[]>((acc, row, idx) => {
-    if (selectedIds.has(getRowId(row, idx))) acc.push(row)
+    if (selectedIds.has(getRowId(row, selectionOffset + idx))) acc.push(row)
     return acc
   }, [])
   $: selectedRowIds = displayRows.reduce<Array<string | number>>((acc, row, idx) => {
-    const id = getRowId(row, idx)
+    const id = getRowId(row, selectionOffset + idx)
     if (selectedIds.has(id)) acc.push(id)
     return acc
   }, [])
@@ -145,9 +150,9 @@
   let editDraft: Row | null = null
 
   const toggleSelected = (idx: number) => {
-    const row = displayRows[idx]
+    const row = paginatedRows[idx]
     if (!row) return
-    const id = getRowId(row, idx)
+    const id = getRowId(row, pageStart + idx)
     const next = new Set(selectedIds)
     if (next.has(id)) {
       next.delete(id)
@@ -179,7 +184,7 @@
   }
 
   const openEdit = (row: Row, idx: number) => {
-    editIndex = idx
+    editIndex = pageStart + idx
     editDraft = { ...row }
     dialogOpen = true
   }
@@ -266,17 +271,20 @@
               </TableCell>
             </TableRow>
           {:else}
-            {#each displayRows as row, rIdx (rIdx)}
-              <TableRow class={selectedIds.has(getRowId(row, rIdx)) ? "bg-muted/40" : ""}>
+          {#each paginatedRows as row, rIdx (pageStart + rIdx)}
+              <TableRow class={selectedIds.has(getRowId(row, pageStart + rIdx)) ? "bg-muted/40" : ""}>
                 <TableCell>
                   <!-- avoid Checkbox custom events: use button for a11y -->
                   <button
                     type="button"
                     class="inline-flex items-center"
                     onclick={() => toggleSelected(rIdx)}
-                    aria-pressed={selectedIds.has(getRowId(row, rIdx))}
+                    aria-pressed={selectedIds.has(getRowId(row, pageStart + rIdx))}
                   >
-                    <Checkbox checked={selectedIds.has(getRowId(row, rIdx))} aria-label="Select row" />
+                    <Checkbox
+                      checked={selectedIds.has(getRowId(row, pageStart + rIdx))}
+                      aria-label="Select row"
+                    />
                   </button>
                 </TableCell>
 
