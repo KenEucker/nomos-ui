@@ -209,10 +209,15 @@
             {#each displayRows as row, rIdx (rIdx)}
               <TableRow class={selectedIds.has(getRowId(row, rIdx)) ? "bg-muted/40" : ""}>
                 <TableCell>
-                  <!-- avoid Checkbox custom events: click wrapper -->
-                  <div class="inline-flex items-center" onclick={() => toggleSelected(rIdx)}>
-                    <Checkbox checked={selectedIds.has(getRowId(row, rIdx))} aria-label="Select row"  />
-                  </div>
+                  <!-- avoid Checkbox custom events: use button for a11y -->
+                  <button
+                    type="button"
+                    class="inline-flex items-center"
+                    onclick={() => toggleSelected(rIdx)}
+                    aria-pressed={selectedIds.has(getRowId(row, rIdx))}
+                  >
+                    <Checkbox checked={selectedIds.has(getRowId(row, rIdx))} aria-label="Select row" />
+                  </button>
                 </TableCell>
 
                 {#each columns as col (col.key)}
