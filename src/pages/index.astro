@@ -1,9 +1,13 @@
 ---
 import PanelHost from "../components/PanelHost.astro"
-import helloPanel from "./index.panel"
+import indexPanel from "./index.panel"
+import { Toaster } from "../components/ui/sonner"
 import "../styles/global.css";
 ---
 
-<div class="mx-auto max-w-5xl p-6">
-  <PanelHost panel={helloPanel} />
+<div class="min-h-screen bg-background text-foreground">
+  <div class="flex min-h-screen items-center justify-center px-4">
+    <PanelHost panel={indexPanel} mode="embed" />
+  </div>
+  <Toaster client:load />
 </div>

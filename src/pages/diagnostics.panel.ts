@@ -1,20 +1,20 @@
 import { Layouts } from "../lib/layouts"
 import type { PanelModule } from "../lib/types"
+import { getDailyMetric } from "../services/metrics"
 
 type Data = {
   status: string
   routes: Array<{ id: string; method: string; path: string }>
   jobs: Array<{ id: string; schedule?: string }>
+  trend: Array<{ date: string; value: number }>
 }
 
 const diagnosticsPanel: PanelModule<Data> = {
   id: "diagnostics",
   title: "Diagnostics",
-  subtitle: "A slightly richer Panel: cards + tables + sections.",
+  subtitle: "Runtime health and operational signals.",
 
-  query: async () => {
-    // Stubbed data to keep this drop-in vanilla.
-    // Replace later with real fetches.
+  load: async () => {
     return {
       status: "OK",
       routes: [
@@ -25,18 +25,53 @@ const diagnosticsPanel: PanelModule<Data> = {
         { id: "cleanup-temp", schedule: "0 * * * *" },
         { id: "sync-metrics", schedule: "*/5 * * * *" },
       ],
+      trend: await getDailyMetric(),
     }
   },
 
-  layout: (data) => [
-    Layouts.section(
-      { title: "Overview", description: "High-level system signals." },
-      [
-        Layouts.card({ title: "Status", value: data.status, description: "Runtime health" }),
-        Layouts.card({ title: "Routes", value: data.routes.length }),
-        Layouts.card({ title: "Jobs", value: data.jobs.length }),
-      ]
-    ),
+  actions: [
+    {
+      id: "toast-info",
+      label: "Toast info",
+      variant: "secondary",
+      run: ({ notify }) => notify("Diagnostics refreshed", "info"),
+    },
+    {
+      id: "toast-success",
+      label: "Toast success",
+      variant: "secondary",
+      run: ({ notify }) => notify("All systems green", "success"),
+    },
+    {
+      id: "toast-error",
+      label: "Toast error",
+      variant: "destructive",
+      run: ({ notify }) => notify("Service degraded", "error"),
+    },
+  ],
+
+  layout: (data, ctx) => [
+    Layouts.cardGrid({
+      cards: [
+        { title: "Status", value: data.status, description: "Runtime health" },
+        { title: "Routes", value: data.routes.length, description: "Registered endpoints" },
+        { title: "Jobs", value: data.jobs.length, description: "Scheduled work" },
+      ],
+    }),
+
+    Layouts.timeSeries({
+      title: "Requests per day",
+      description: "Synthetic traffic trend",
+      data: data.trend,
+    }),
+
+    Layouts.errorBox({
+      title: "Telemetry stream",
+      message: "Error rate spike detected in shard 2.",
+      details: "Sample trace: shard=2, error=timeout, service=metrics-bridge",
+      retryLabel: "Retry fetch",
+      onRetry: () => ctx?.notify?.("Retrying telemetry", "info"),
+    }),
 
     Layouts.section(
       { title: "Routes", description: "Registered endpoints." },
@@ -51,8 +86,6 @@ const diagnosticsPanel: PanelModule<Data> = {
           ],
           rows: data.routes,
           emptyMessage: "No routes.",
-          dataKey: "routes",
-          rowIdKey: "id",
         }),
       ]
     ),
@@ -69,8 +102,6 @@ const diagnosticsPanel: PanelModule<Data> = {
           ],
           rows: data.jobs,
           emptyMessage: "No jobs.",
-          dataKey: "jobs",
-          rowIdKey: "id",
         }),
       ]
     ),

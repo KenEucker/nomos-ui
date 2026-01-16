@@ -1,43 +1,89 @@
-# Astro Starter Kit: Nomos
+# Nomos-UI
+
+Nomos-UI provides a panel-first admin UI system inspired by Laravel Orchid. Panels are declarative, typed, and composed from standard primitives (cards, tables, forms, tabs, charts) so that both humans and LLMs can reliably build admin experiences.
+
+## Panel model
+
+Panels are module files (e.g. `src/pages/users.panel.ts`) that export a `PanelModule`:
+
+```ts
+import type { PanelModule } from "./src/lib/types"
+
+const panel: PanelModule = {
+  id: "users",
+  title: "Users",
+  subtitle: "Manage access",
+  schema: myZodSchema,
+  load: async (ctx) => ({ /* data */ }),
+  actions: [
+    { id: "refresh", label: "Refresh", run: ({ notify }) => notify("Loaded", "success") },
+  ],
+  layout: (data, ctx) => [/* Layouts.card(), Layouts.table(), ... */],
+}
+```
+
+`PanelHost` renders panels as pages, modals, or embedded regions by passing a `mode`:
+
+```astro
+<PanelHost panel={usersPanel} mode="page" />
+```
+
+## Adding a panel
+
+1. Create `src/pages/<name>.panel.ts` that exports a `PanelModule`.
+2. Create `src/pages/<name>.astro` and render the panel inside `AppShell`.
+3. Update navigation links if needed.
+
+## Datatable panel example
+
+```ts
+Layouts.table({
+  id: "users",
+  title: "Directory",
+  columns: [
+    { key: "name", label: "Name" },
+    { key: "email", label: "Email" },
+  ],
+  rows: data.users,
+  rowActions: [
+    { id: "delete", label: "Delete", variant: "destructive", run: ({ row }) => {/* ... */} },
+  ],
+  page: data.query.page,
+  pageSize: data.query.pageSize,
+  total: data.total,
+  onQueryChange: async (query) => { /* fetch rows */ },
+})
+```
+
+## Form panel example
+
+```ts
+Layouts.form({
+  id: "create-user",
+  title: "New user",
+  schema: userSchema,
+  fields: [
+    { name: "name", label: "Name", type: "text" },
+    { name: "role", label: "Role", type: "relation", loadOptions: listRoles },
+    {
+      name: "username",
+      label: "Username",
+      type: "lookup",
+      lookup: {
+        title: "Generate username",
+        fields: [{ name: "name", label: "Display name" }],
+        onLookup: runUsernameLookup,
+        applyResult: (result) => ({ username: result.username }),
+      },
+    },
+  ],
+  onSubmit: async (values) => {/* ... */},
+})
+```
+
+## Development
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run dev
 ```
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).

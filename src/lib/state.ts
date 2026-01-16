@@ -7,6 +7,8 @@ export type TableUiState = {
   search: string
   sortKey: string | null
   sortDir: SortDir
+  page: number
+  pageSize: number
 }
 
 export type PanelUiState = {
@@ -17,6 +19,8 @@ const defaultTableState = (): TableUiState => ({
   search: "",
   sortKey: null,
   sortDir: "asc",
+  page: 1,
+  pageSize: 10,
 })
 
 const createUiState = () => {
@@ -32,6 +36,7 @@ const createUiState = () => {
     update((s) => {
       s.tables[tableId] ??= defaultTableState()
       s.tables[tableId].search = search
+      s.tables[tableId].page = 1
       return s
     })
 
@@ -50,6 +55,21 @@ const createUiState = () => {
       return s
     })
 
+  const setTablePage = (tableId: string, page: number) =>
+    update((s) => {
+      s.tables[tableId] ??= defaultTableState()
+      s.tables[tableId].page = page
+      return s
+    })
+
+  const setTablePageSize = (tableId: string, pageSize: number) =>
+    update((s) => {
+      s.tables[tableId] ??= defaultTableState()
+      s.tables[tableId].pageSize = pageSize
+      s.tables[tableId].page = 1
+      return s
+    })
+
   const resetTable = (tableId: string) =>
     update((s) => {
       s.tables[tableId] = defaultTableState()
@@ -61,6 +81,8 @@ const createUiState = () => {
     ensureTable,
     setTableSearch,
     toggleTableSort,
+    setTablePage,
+    setTablePageSize,
     resetTable,
   }
 }

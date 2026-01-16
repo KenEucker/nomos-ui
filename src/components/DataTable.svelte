@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { uiState } from "../lib/state"
-  import type { TableNode } from "../lib/types"
+  import type { PanelAction, TableNode } from "../lib/types"
 
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card"
   import { Input } from "./ui/input"
@@ -27,10 +27,25 @@
   export let columns: TableNode["props"]["columns"]
   export let rows: TableNode["props"]["rows"]
   export let emptyMessage: string | undefined = undefined
+  export let rowActions: PanelAction[] | undefined = undefined
 
   // metadata for deterministic patching
   export let dataKey: string | undefined = undefined
   export let rowIdKey: string | undefined = undefined
+
+  export let page: number | undefined = undefined
+  export let pageSize: number | undefined = undefined
+  export let total: number | undefined = undefined
+  export let loading: boolean = false
+  export let onQueryChange:
+    | ((query: {
+        page: number
+        pageSize: number
+        search: string
+        sortKey: string | null
+        sortDir: "asc" | "desc"
+      }) => void | Promise<void>)
+    | undefined = undefined
 
   // ✅ Svelte 5-forward “events”: callback props
   export let onSelect:
@@ -45,6 +60,10 @@
         row: Row
         patch: Partial<Row>
       }) => void | Promise<void>)
+    | undefined = undefined
+
+  export let onRowAction:
+    | ((action: PanelAction, row: Row) => void | Promise<void>)
     | undefined = undefined
 
   $: tableId = `${tableIdPrefix}:${id ?? title}`
@@ -84,8 +103,22 @@
     uiState.ensureTable(tableId)
   })
 
-  $: tableState = $uiState.tables?.[tableId] ?? { search: "", sortKey: null, sortDir: "asc" }
-  $: displayRows = deriveRows((rows ?? []) as Row[], tableState)
+  $: tableState =
+    $uiState.tables?.[tableId] ?? { search: "", sortKey: null, sortDir: "asc", page: 1, pageSize: 10 }
+  $: effectivePage = page ?? tableState.page
+  $: effectivePageSize = pageSize ?? tableState.pageSize
+  $: displayRows = onQueryChange
+    ? ((rows ?? []) as Row[])
+    : deriveRows((rows ?? []) as Row[], tableState)
+  $: totalPages = Math.max(1, Math.ceil((total ?? displayRows.length) / effectivePageSize))
+
+  $: if (page != null && page !== tableState.page) {
+    uiState.setTablePage(tableId, page)
+  }
+
+  $: if (pageSize != null && pageSize !== tableState.pageSize) {
+    uiState.setTablePageSize(tableId, pageSize)
+  }
 
   // ---- Selection + Dialog ----
   const getRowId = (row: Row, idx: number) =>
@@ -122,6 +155,27 @@
       next.add(id)
     }
     selectedIds = next
+  }
+
+  const triggerQueryChange = async () => {
+    await onQueryChange?.({
+      page: effectivePage,
+      pageSize: effectivePageSize,
+      search: tableState.search,
+      sortKey: tableState.sortKey,
+      sortDir: tableState.sortDir,
+    })
+  }
+
+  const setPage = async (next: number) => {
+    const clamped = Math.min(totalPages, Math.max(1, next))
+    uiState.setTablePage(tableId, clamped)
+    await triggerQueryChange()
+  }
+
+  const setPageSize = async (next: number) => {
+    uiState.setTablePageSize(tableId, next)
+    await triggerQueryChange()
   }
 
   const openEdit = (row: Row, idx: number) => {
@@ -164,14 +218,17 @@
         <Input
           value={tableState.search}
           placeholder="Search…"
-          oninput={(e) => uiState.setTableSearch(tableId, (e.currentTarget as HTMLInputElement).value)}
+          oninput={async (e) => {
+            uiState.setTableSearch(tableId, (e.currentTarget as HTMLInputElement).value)
+            await triggerQueryChange()
+          }}
         />
       </div>
     </div>
   </CardHeader>
 
   <CardContent class="pt-0">
-    <div class="rounded-md border overflow-auto">
+    <div class="rounded-md border overflow-auto relative">
       <Table>
         <TableHeader>
           <TableRow>
@@ -182,7 +239,10 @@
                 <Button
                   variant="ghost"
                   class="h-8 px-2 -ml-2"
-                  onclick={() => uiState.toggleTableSort(tableId, col.key)}
+                  onclick={async () => {
+                    uiState.toggleTableSort(tableId, col.key)
+                    await triggerQueryChange()
+                  }}
                 >
                   {col.label}
                   {#if tableState.sortKey === col.key}
@@ -194,7 +254,7 @@
               </TableHead>
             {/each}
 
-            <TableHead class="w-24 text-right">Actions</TableHead>
+            <TableHead class="w-32 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -225,15 +285,74 @@
                 {/each}
 
                 <TableCell class="text-right">
-                  <Button size="sm" variant="secondary" onclick={() => openEdit(row, rIdx)}>
-                    Edit
-                  </Button>
+                  <div class="flex justify-end gap-2">
+                    {#if rowActions?.length}
+                      {#each rowActions as action (action.id)}
+                        <Button
+                          size="sm"
+                          variant={action.variant ?? "secondary"}
+                          onclick={() => onRowAction?.(action, row)}
+                        >
+                          {action.label}
+                        </Button>
+                      {/each}
+                    {/if}
+                    <Button size="sm" variant="secondary" onclick={() => openEdit(row, rIdx)}>
+                      Edit
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             {/each}
           {/if}
         </TableBody>
       </Table>
+
+      {#if loading}
+        <div class="absolute inset-0 flex items-center justify-center bg-background/70 text-sm text-muted-foreground">
+          Loading…
+        </div>
+      {/if}
+
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/5 px-4 py-3 text-sm">
+        <div class="text-muted-foreground">
+          Page {effectivePage} of {totalPages}
+          {#if total != null}
+            · {total} total
+          {/if}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="ghost" onclick={() => setPage(effectivePage - 1)} disabled={effectivePage <= 1}>
+            Previous
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onclick={() => setPage(effectivePage + 1)}
+            disabled={effectivePage >= totalPages}
+          >
+            Next
+          </Button>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-muted-foreground">Jump</span>
+            <Input
+              class="w-16"
+              value={String(effectivePage)}
+              onblur={(e) => setPage(Number((e.currentTarget as HTMLInputElement).value))}
+            />
+          </div>
+          <select
+            class="rounded-md border border-input bg-background px-2 py-1 text-xs"
+            oninput={(e) => setPageSize(Number((e.currentTarget as HTMLSelectElement).value))}
+            value={String(effectivePageSize)}
+          >
+            <option value="5">5 / page</option>
+            <option value="10">10 / page</option>
+            <option value="20">20 / page</option>
+          </select>
+        </div>
+      </div>
 
       <Dialog.Root bind:open={dialogOpen}>
         <Dialog.Content class="sm:max-w-lg">

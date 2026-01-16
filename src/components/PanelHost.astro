@@ -2,7 +2,7 @@
 import type { PanelCtx, PanelModule, PanelRenderContext } from "../lib/types"
 import PanelRuntime from "./PanelRuntime.svelte"
 
-const { panel } = Astro.props as { panel: PanelModule<any> }
+const { panel, mode = "page" } = Astro.props as { panel: PanelModule<any>; mode?: "page" | "embed" | "modal" }
 
 const ctx: PanelCtx = {
   request: Astro.request,
@@ -10,7 +10,7 @@ const ctx: PanelCtx = {
 }
 
 const renderCtx: PanelRenderContext = {
-  mode: "page",
+  mode,
   url: Astro.url,
 }
 
@@ -18,7 +18,7 @@ let initialData: any = null
 let initialError: string | null = null
 
 try {
-  initialData = await panel.query(ctx)
+  initialData = panel.load ? await panel.load(ctx) : null
 } catch (e: any) {
   initialError = e?.message ?? String(e)
 }
