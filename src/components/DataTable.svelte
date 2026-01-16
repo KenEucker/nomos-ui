@@ -162,25 +162,31 @@
     selectedIds = next
   }
 
-  const triggerQueryChange = async () => {
+  const triggerQueryChange = async (overrides?: Partial<{
+    page: number
+    pageSize: number
+    search: string
+    sortKey: string | null
+    sortDir: "asc" | "desc"
+  }>) => {
     await onQueryChange?.({
-      page: effectivePage,
-      pageSize: effectivePageSize,
-      search: tableState.search,
-      sortKey: tableState.sortKey,
-      sortDir: tableState.sortDir,
+      page: overrides?.page ?? effectivePage,
+      pageSize: overrides?.pageSize ?? effectivePageSize,
+      search: overrides?.search ?? tableState.search,
+      sortKey: overrides?.sortKey ?? tableState.sortKey,
+      sortDir: overrides?.sortDir ?? tableState.sortDir,
     })
   }
 
   const setPage = async (next: number) => {
     const clamped = Math.min(totalPages, Math.max(1, next))
     uiState.setTablePage(tableId, clamped)
-    await triggerQueryChange()
+    await triggerQueryChange({ page: clamped })
   }
 
   const setPageSize = async (next: number) => {
     uiState.setTablePageSize(tableId, next)
-    await triggerQueryChange()
+    await triggerQueryChange({ page: 1, pageSize: next })
   }
 
   const openEdit = (row: Row, idx: number) => {
@@ -224,8 +230,9 @@
           value={tableState.search}
           placeholder="Search…"
           oninput={async (e) => {
-            uiState.setTableSearch(tableId, (e.currentTarget as HTMLInputElement).value)
-            await triggerQueryChange()
+            const nextSearch = (e.currentTarget as HTMLInputElement).value
+            uiState.setTableSearch(tableId, nextSearch)
+            await triggerQueryChange({ page: 1, search: nextSearch })
           }}
         />
       </div>
@@ -245,8 +252,14 @@
                   variant="ghost"
                   class="h-8 px-2 -ml-2"
                   onclick={async () => {
+                    const nextSortDir =
+                      tableState.sortKey === col.key
+                        ? tableState.sortDir === "asc"
+                          ? "desc"
+                          : "asc"
+                        : "asc"
                     uiState.toggleTableSort(tableId, col.key)
-                    await triggerQueryChange()
+                    await triggerQueryChange({ sortKey: col.key, sortDir: nextSortDir })
                   }}
                 >
                   {col.label}
