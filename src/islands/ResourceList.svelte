@@ -21,14 +21,12 @@
     page: 1,
     pageSize: 20,
     search: "",
-    sortKey: null as string | null,
-    sortDir: "asc" as "asc" | "desc",
+    sortKey: definition.list?.defaultSort?.key ?? null,
+    sortDir: definition.list?.defaultSort?.direction ?? ("asc" as "asc" | "desc"),
   }
   let loading = false
   let debounceId: ReturnType<typeof setTimeout> | null = null
   let requestId = 0
-  let lastQueryKey = ""
-  let lastSearch = ""
   let dataKey: string | undefined = definition.dataKey
   let rowIdKey: string | undefined = definition.singleDataKey
 
@@ -73,8 +71,8 @@
       const response = await apiGet<any>(buildUrl(nextQuery))
       if (currentRequest !== requestId) return
       const { items: nextItems, total: nextTotal } = unwrapItems(response, definition.dataKey)
-      items = nextItems
-      total = nextTotal
+      items = Array.isArray(nextItems) ? nextItems : []
+      total = typeof nextTotal === "number" ? nextTotal : 0
     } catch (error) {
       if (currentRequest !== requestId) return
       items = []
@@ -98,32 +96,28 @@
     sortKey: string | null
     sortDir: "asc" | "desc"
   }) => {
+    if (debounceId) clearTimeout(debounceId)
+    const previousSearch = query.search
     query = { ...nextQuery }
+
+    if (previousSearch !== query.search) {
+      scheduleFetch(250, query)
+      return
+    }
+
+    await fetchList(query)
   }
 
   onMount(() => {
     query = {
       ...query,
       pageSize: listConfig.pageSize ?? 20,
-      sortKey: listConfig.defaultSort?.key ?? null,
-      sortDir: listConfig.defaultSort?.direction ?? "asc",
+      sortKey: listConfig.defaultSort?.key ?? query.sortKey,
+      sortDir: listConfig.defaultSort?.direction ?? query.sortDir,
     }
-  })
 
-  $: if (query) {
-    const nextKey = JSON.stringify(query)
-    if (nextKey !== lastQueryKey) {
-      lastQueryKey = nextKey
-      if (debounceId) clearTimeout(debounceId)
-      if (lastSearch !== query.search) {
-        lastSearch = query.search
-        scheduleFetch(250, query)
-      } else {
-        lastSearch = query.search
-        fetchList(query)
-      }
-    }
-  }
+    fetchList(query)
+  })
 
   onDestroy(() => {
     if (debounceId) clearTimeout(debounceId)
@@ -133,8 +127,8 @@
   id={definition.name}
   tableIdPrefix={tableIdPrefix}
   title={title}
-  columns={columns}
-  rows={items}
+  columns={[...columns]}
+  rows={[...items]}
   emptyMessage={emptyMessage}
   dataKey={dataKey}
   rowIdKey={rowIdKey}
