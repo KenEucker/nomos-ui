@@ -19,7 +19,7 @@
 
   let items: Row[] = []
   let total = 0
-  let query = {
+  let lastQuery = {
     page: 1,
     pageSize: 20,
     search: "",
@@ -57,7 +57,7 @@
     return { items, total }
   }
 
-  const buildUrl = (nextQuery = query) => {
+  const buildUrl = (nextQuery = lastQuery) => {
     const params = new URLSearchParams()
     params.set("page", String(nextQuery.page))
     params.set("pageSize", String(nextQuery.pageSize))
@@ -67,7 +67,7 @@
     return query ? `${definition.endpoints.list}?${query}` : definition.endpoints.list
   }
 
-  const fetchList = async (nextQuery = query) => {
+  const fetchList = async (nextQuery = lastQuery) => {
     const currentRequest = ++requestId
     loading = true
     try {
@@ -85,7 +85,7 @@
     }
   }
 
-  const scheduleFetch = (delayMs: number, nextQuery = query) => {
+  const scheduleFetch = (delayMs: number, nextQuery = lastQuery) => {
     if (debounceId) clearTimeout(debounceId)
     debounceId = setTimeout(() => {
       fetchList(nextQuery)
@@ -100,21 +100,21 @@
     sortDir: "asc" | "desc"
   }) => {
     if (debounceId) clearTimeout(debounceId)
-    const previousSearch = query.search
-    query = { ...nextQuery }
+    const previousSearch = lastQuery.search
+    lastQuery = { ...nextQuery }
 
-    if (previousSearch !== query.search) {
-      scheduleFetch(250, query)
+    if (previousSearch !== lastQuery.search) {
+      scheduleFetch(250, lastQuery)
       return
     }
 
-    await fetchList(query)
+    await fetchList(lastQuery)
   }
 
   onMount(() => {
     if (!defaultsApplied) {
-      query = {
-        ...query,
+      lastQuery = {
+        ...lastQuery,
         pageSize: listConfig.pageSize ?? 20,
         sortKey: listConfig.defaultSort?.key ?? null,
         sortDir: listConfig.defaultSort?.direction ?? "asc",
@@ -123,16 +123,17 @@
     }
 
     uiState.resetTable(tableId)
-    uiState.setTablePageSize(tableId, query.pageSize)
+    uiState.setTablePage(tableId, lastQuery.page)
+    uiState.setTablePageSize(tableId, lastQuery.pageSize)
 
-    if (query.sortKey) {
-      uiState.toggleTableSort(tableId, query.sortKey)
-      if (query.sortDir === "desc") {
-        uiState.toggleTableSort(tableId, query.sortKey)
+    if (lastQuery.sortKey) {
+      uiState.toggleTableSort(tableId, lastQuery.sortKey)
+      if (lastQuery.sortDir === "desc") {
+        uiState.toggleTableSort(tableId, lastQuery.sortKey)
       }
     }
 
-    fetchList(query)
+    fetchList(lastQuery)
   })
 
   onDestroy(() => {
@@ -148,8 +149,6 @@
   emptyMessage={emptyMessage}
   dataKey={dataKey}
   rowIdKey={rowIdKey}
-  page={query.page}
-  pageSize={query.pageSize}
   total={total}
   loading={loading}
   showSearch={listConfig.searchable ?? false}
