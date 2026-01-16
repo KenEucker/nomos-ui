@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { createResourceDefinition } from "../../lib/utils"
-import type { ResourceInput } from "../../lib/types"
+import type { ResourceDefinition } from "../../lib/types"
 
 const userSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -10,7 +10,7 @@ const userSchema = z.object({
   username: z.string().min(3, "Username is required"),
 })
 
-export const usersResource: ResourceInput = createResourceDefinition({
+export const usersResource: ResourceDefinition = createResourceDefinition({
   name: "users",
 
   labels: {

@@ -238,7 +238,7 @@ export type ResourceFormConfig = {
   fields?: FieldDef[]
 }
 
-export type ResourceInput = ResourceLabels & {
+export type ResourceDefinition = ResourceLabels & {
   name: string
   endpoints: ResourceEndpoints
   menu?: ResourceMenu
@@ -250,7 +250,7 @@ export type ResourceInput = ResourceLabels & {
   singleDataKey?: string
 }
 
-export type ResourceInputPartial = Partial<Omit<ResourceInput, "name" | "endpoints">> & {
+export type ResourceDefinitionPartial = Partial<Omit<ResourceDefinition, "name" | "endpoints">> & {
   name: string
   endpoints: ResourceEndpoints
 }

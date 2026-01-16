@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { ResourceInputPartial, ResourceInput, ResourceMenu } from "./types";
+import type { ResourceDefinitionPartial, ResourceDefinition, ResourceMenu } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -22,7 +22,7 @@ const titleCase = (value: string) =>
 
 const pluralize = (value: string) => (value.endsWith("s") ? value : `${value}s`)
 
-export const createResourceDefinition = (input: ResourceInputPartial): ResourceInput => {
+export const createResourceDefinition = (input: ResourceDefinitionPartial): ResourceDefinition => {
   const derivedLabel = titleCase(input.name)
   const derivedLabelPlural = pluralize(derivedLabel)
 
