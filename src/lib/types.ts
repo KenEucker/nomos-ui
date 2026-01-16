@@ -1,4 +1,5 @@
 import type { ZodSchema } from "zod"
+import type { z } from "zod"
 
 export type PanelCtx = {
   // Minimal for now. Expand later (auth, params, api client, etc.)
@@ -171,6 +172,7 @@ export type ColumnDef = {
   key: string
   label: string
   sortable?: boolean
+  hideOnMobile?: boolean
 }
 
 export type FieldDef = {
@@ -237,12 +239,18 @@ export type ResourceFormConfig = {
 }
 
 export type ResourceInput = ResourceLabels & {
-  identity: string
+  name: string
   endpoints: ResourceEndpoints
   menu?: ResourceMenu
   list?: ResourceListConfig
   form?: ResourceFormConfig
+  schema?: z.ZodTypeAny
   requiredPermission?: string
   dataKey?: string
   singleDataKey?: string
+}
+
+export type ResourceInputPartial = Partial<Omit<ResourceInput, "name" | "endpoints">> & {
+  name: string
+  endpoints: ResourceEndpoints
 }
