@@ -28,6 +28,8 @@
   let defaultsApplied = false
   let debounceId: ReturnType<typeof setTimeout> | null = null
   let requestId = 0
+  let dataKey: string | undefined = definition.dataKey
+  let rowIdKey: string | undefined = definition.singleDataKey
 
   $: listConfig = definition.list ?? {}
   $: columns = listConfig.columns ?? []
@@ -136,7 +138,6 @@
     if (debounceId) clearTimeout(debounceId)
   })
 </script>
-
 <DataTable
   id={definition.name}
   tableIdPrefix={tableIdPrefix}
@@ -144,6 +145,8 @@
   columns={columns}
   rows={items}
   emptyMessage={emptyMessage}
+  dataKey={dataKey}
+  rowIdKey={rowIdKey}
   page={page}
   pageSize={pageSize}
   total={total}

@@ -1,7 +1,7 @@
 import { Layouts } from "../../lib/layouts"
 import type { PanelAction, PanelModule } from "../../lib/types"
-import { listRoles, listTeams, listUsers, runUsernameLookup, type User } from "../../services/users"
-import { usersResource } from "./users.resource"
+import { listUsers, type User } from "../../services/users"
+import { usersResource } from "../resources/users.resource"
 
 const userSchema = usersResource.schema
 

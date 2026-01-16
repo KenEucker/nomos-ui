@@ -1,0 +1,10 @@
+---
+import ResourceList from "../../islands/ResourceList.svelte"
+import AppShell from "../../components/AppShell.astro"
+import {usersResource} from "./users.resource"
+import "../../styles/global.css";
+---
+
+<AppShell title="Users">
+  <ResourceList client:load definition={usersResource} />
+</AppShell>

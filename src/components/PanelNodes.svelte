@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { LayoutNode, PanelAction } from "../lib/types"
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card"
-  import { Button } from "./ui/button"
   import DataTable from "./DataTable.svelte"
   import CardGrid from "./layouts/CardGrid.svelte"
   import ErrorBox from "./ErrorBox.svelte"
@@ -72,8 +71,8 @@
 
     {:else if node.type === "table"}
       <DataTable
-        tableIdPrefix={`${panelId}:table`}
         id={node.props.id}
+        tableIdPrefix={`${panelId}:table`}
         title={node.props.title}
         description={node.props.description}
         columns={node.props.columns}
