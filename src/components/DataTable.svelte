@@ -33,6 +33,7 @@
   export let showSelection: boolean = true
   export let showActions: boolean = true
   export let enableEdit: boolean = true
+  export let disableControlsWhileLoading: boolean = false
 
   // metadata for deterministic patching
   export let dataKey: string | undefined = undefined
@@ -237,7 +238,7 @@
           <Input
             value={tableState.search}
             placeholder={searchPlaceholder}
-            disabled={loading}
+            disabled={disableControlsWhileLoading && loading}
             oninput={async (e) => {
               const nextSearch = (e.currentTarget as HTMLInputElement).value
               uiState.setTableSearch(tableId, nextSearch)
@@ -264,7 +265,7 @@
                   <Button
                     variant="ghost"
                     class="h-8 px-2 -ml-2"
-                    disabled={loading}
+                    disabled={disableControlsWhileLoading && loading}
                     onclick={async () => {
                       const nextSortDir =
                         tableState.sortKey === col.key
@@ -314,7 +315,7 @@
                       class="inline-flex items-center"
                       onclick={() => toggleSelected(rIdx)}
                       aria-pressed={selectedIds.has(getRowId(row, pageStart + rIdx))}
-                      disabled={loading}
+                      disabled={disableControlsWhileLoading && loading}
                     >
                       <Checkbox
                         checked={selectedIds.has(getRowId(row, pageStart + rIdx))}
@@ -339,14 +340,19 @@
                             size="sm"
                             variant={action.variant ?? "secondary"}
                             onclick={() => onRowAction?.(action, row)}
-                            disabled={loading}
+                            disabled={disableControlsWhileLoading && loading}
                           >
                             {action.label}
                           </Button>
                         {/each}
                       {/if}
                       {#if enableEdit}
-                        <Button size="sm" variant="secondary" onclick={() => openEdit(row, rIdx)} disabled={loading}>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onclick={() => openEdit(row, rIdx)}
+                          disabled={disableControlsWhileLoading && loading}
+                        >
                           Edit
                         </Button>
                       {/if}
@@ -378,7 +384,7 @@
             size="sm"
             variant="ghost"
             onclick={() => setPage(effectivePage - 1)}
-            disabled={loading || effectivePage <= 1}
+            disabled={(disableControlsWhileLoading && loading) || effectivePage <= 1}
           >
             Previous
           </Button>
@@ -386,7 +392,7 @@
             size="sm"
             variant="ghost"
             onclick={() => setPage(effectivePage + 1)}
-            disabled={loading || effectivePage >= totalPages}
+            disabled={(disableControlsWhileLoading && loading) || effectivePage >= totalPages}
           >
             Next
           </Button>
@@ -396,14 +402,14 @@
               class="w-16"
               value={String(effectivePage)}
               onblur={(e) => setPage(Number((e.currentTarget as HTMLInputElement).value))}
-              disabled={loading}
+              disabled={disableControlsWhileLoading && loading}
             />
           </div>
           <select
             class="rounded-md border border-input bg-background px-2 py-1 text-xs"
             oninput={(e) => setPageSize(Number((e.currentTarget as HTMLSelectElement).value))}
             value={String(effectivePageSize)}
-            disabled={loading}
+            disabled={disableControlsWhileLoading && loading}
           >
             <option value="5">5 / page</option>
             <option value="10">10 / page</option>

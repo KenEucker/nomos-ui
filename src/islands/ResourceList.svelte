@@ -153,5 +153,6 @@
   showSelection={false}
   showActions={false}
   enableEdit={false}
+  disableControlsWhileLoading={true}
   onQueryChange={handleQueryChange}
 />
