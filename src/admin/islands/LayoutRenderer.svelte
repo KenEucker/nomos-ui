@@ -100,18 +100,7 @@
         showSelection={false}
         showActions={true}
         enableEdit={true}
-        page={state.page}
-        pageSize={state.pageSize}
-        total={node.props.paginationKey ? data[node.props.paginationKey]?.total : undefined}
         loading={false}
-        onQueryChange={(query) =>
-          onStateChange({
-            page: query.page,
-            pageSize: query.pageSize,
-            search: query.search || undefined,
-            sort: query.sortKey ? { key: query.sortKey, dir: query.sortDir } : undefined,
-          })
-        }
         onSave={async ({ row, patch }) => {
           const response = await fetch("/api/users", {
             method: "PATCH",

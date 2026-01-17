@@ -8,10 +8,8 @@ const usersPanel: PanelModule = {
 
   query: async (ctx) => {
     const params = new URLSearchParams()
-    params.set("page", String(ctx.state.page))
-    params.set("pageSize", String(ctx.state.pageSize))
-    if (ctx.state.search) params.set("search", ctx.state.search)
-    if (ctx.state.sort) params.set("sort", `${ctx.state.sort.key}:${ctx.state.sort.dir}`)
+    params.set("page", "1")
+    params.set("pageSize", "250")
 
     const response = await fetch(new URL(`/api/users?${params.toString()}`, ctx.url)).then((res) => res.json())
 
@@ -19,10 +17,8 @@ const usersPanel: PanelModule = {
       users: response.data?.users ?? [],
       meta: {
         total: response.meta?.total ?? 0,
-        page: ctx.state.page,
-        pageSize: ctx.state.pageSize,
-        search: ctx.state.search,
-        sort: ctx.state.sort,
+        page: 1,
+        pageSize: 250,
       },
     }
   },
