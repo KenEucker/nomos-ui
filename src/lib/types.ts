@@ -1,4 +1,4 @@
-import type { z } from "zod"
+import type { JSONSchema7 } from "json-schema"
 
 export type QueryState = {
   page: number
@@ -125,7 +125,7 @@ export type FormNode = {
     id: string
     title?: string
     description?: string
-    schema?: unknown
+    schema?: JSONSchema7
     fields: FieldDef[]
     submitLabel?: string
     submitEndpoint: string
@@ -230,7 +230,8 @@ export type ResourceDefinition = ResourceLabels & {
   menu?: ResourceMenu
   list?: ResourceListConfig
   form?: ResourceFormConfig
-  schema?: z.ZodTypeAny
+  // Admin resource schemas are JSON Schema; backend will later use Zod for API/db contracts.
+  schema?: JSONSchema7
   requiredPermission?: string
   dataKey?: string
   singleDataKey?: string
