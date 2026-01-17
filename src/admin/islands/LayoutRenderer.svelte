@@ -98,8 +98,8 @@
         dataKey={node.props.rowsKey}
         rowIdKey="id"
         showSelection={false}
-        showActions={false}
-        enableEdit={false}
+        showActions={true}
+        enableEdit={true}
         page={state.page}
         pageSize={state.pageSize}
         total={node.props.paginationKey ? data[node.props.paginationKey]?.total : undefined}
@@ -112,6 +112,17 @@
             sort: query.sortKey ? { key: query.sortKey, dir: query.sortDir } : undefined,
           })
         }
+        onSave={async ({ row, patch }) => {
+          const response = await fetch("/api/users", {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ id: row.id, patch }),
+          })
+          if (!response.ok) {
+            throw new Error(`Save failed with status ${response.status}`)
+          }
+          onStateChange(state)
+        }}
       />
     {:else if node.type === "fieldset"}
       <fieldset class="space-y-4 rounded-xl border bg-card p-6">

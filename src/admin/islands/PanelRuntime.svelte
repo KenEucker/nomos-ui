@@ -100,6 +100,7 @@
   }
 
   const handleStateChange = (next: QueryState) => {
+    currentState = next
     const url = updateUrlWithState(new URL(window.location.href), next)
     window.history.replaceState({}, "", url.toString())
     runQuery()
