@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { LayoutNode, QueryState } from "../types"
   import DataTable from "../../components/DataTable.svelte"
+  import PanelHeader from "../components/PanelHeader.svelte"
 
   export let nodes: LayoutNode[] = []
   export let data: Record<string, any> = {}
@@ -135,6 +136,8 @@
           {getValue(data, node.props.valueKey) ?? "—"}
         </div>
       </div>
+    {:else if node.type === "header"}
+      <PanelHeader title={node.props.title} subtitle={node.props.subtitle} />
     {/if}
   {/each}
 </div>

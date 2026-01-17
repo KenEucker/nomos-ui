@@ -1,10 +1,13 @@
 import { Layouts } from "../../../admin/layouts"
 import type { PanelModule } from "../../../admin/types"
 
+const title = "Users"
+const subtitle = "Directory of workspace users."
+
 const usersPanel: PanelModule = {
   id: "users",
-  title: "Users",
-  subtitle: "Directory of workspace users.",
+  title,
+  subtitle,
 
   query: async (ctx) => {
     const params = new URLSearchParams()
@@ -35,6 +38,10 @@ const usersPanel: PanelModule = {
 
   layout: () => [
     Layouts.rows([
+      Layouts.header({
+        title,
+        subtitle,
+      }),
       Layouts.table({
         key: "users",
         title: "Users",
