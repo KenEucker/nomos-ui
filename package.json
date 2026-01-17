@@ -12,10 +12,10 @@
     "@astrojs/svelte": "^7.2.5",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.9",
+    "jsonschema": "^1.5.0",
     "svelte": "^5.46.4",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3",
-    "zod": "^3.25.76"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@internationalized/date": "^3.10.1",
