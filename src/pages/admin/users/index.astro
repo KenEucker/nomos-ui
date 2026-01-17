@@ -1,13 +1,7 @@
 ---
-import ResourcePanelPage from "../../../components/ResourcePanelPage.astro"
-import { createResourcePanel } from "$lib/resource-panel"
-import { usersResource } from "./users.resource"
-
-const mode = "list"
-const params = {}
-const basePath = "/admin/users"
-const panel = createResourcePanel({ resource: usersResource, mode, params, basePath })
-const resourceConfig = { resource: usersResource, mode, params, basePath }
+import PanelPage from "../../../components/PanelPage.astro"
+import usersPanel from "./index.panel"
+const panelModuleKey = "/src/pages/admin/users/index.panel.ts"
 ---
 
-<ResourcePanelPage panel={panel} resourceConfig={resourceConfig} />
+<PanelPage panel={usersPanel} panelModuleKey={panelModuleKey} />
