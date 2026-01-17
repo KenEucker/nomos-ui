@@ -4,7 +4,7 @@
   Query params: page, pageSize, search (when provided), sort=key:dir.
 -->
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte"
+  import { onMount } from "svelte"
   import DataTable from "../components/DataTable.svelte"
   import { apiGet } from "../lib/api"
   import type { ResourceDefinition } from "../lib/types"
@@ -25,7 +25,6 @@
     sortDir: "asc" as "asc" | "desc",
   }
   let loading = false
-  let debounceId: ReturnType<typeof setTimeout> | null = null
   let requestId = 0
   $: dataKey = definition?.dataKey
   $: rowIdKey = definition?.singleDataKey
@@ -83,33 +82,6 @@
     }
   }
 
-  const scheduleFetch = (delayMs: number, nextQuery = query) => {
-    if (debounceId) clearTimeout(debounceId)
-    debounceId = setTimeout(() => {
-      fetchList(nextQuery)
-    }, delayMs)
-  }
-
-  const handleQueryChange = async (nextQuery: {
-    page: number
-    pageSize: number
-    search: string
-    sortKey: string | null
-    sortDir: "asc" | "desc"
-  }) => {
-    const previousSearch = query.search
-    query = { ...nextQuery }
-    const searchChanged = previousSearch !== query.search
-
-    if (debounceId) clearTimeout(debounceId)
-
-    if (searchChanged) {
-      scheduleFetch(250, query)
-    } else {
-      await fetchList(query)
-    }
-  }
-
   onMount(() => {
     query = {
       page: 1,
@@ -121,10 +93,6 @@
 
     fetchList(query)
   })
-
-  onDestroy(() => {
-    if (debounceId) clearTimeout(debounceId)
-  })
 </script>
 <DataTable
   id={definition.name}
@@ -135,9 +103,6 @@
   emptyMessage={emptyMessage}
   dataKey={dataKey}
   rowIdKey={rowIdKey}
-  page={query.page}
-  pageSize={query.pageSize}
-  total={total}
   loading={loading}
   showSearch={listConfig.searchable ?? false}
   searchPlaceholder={listConfig.searchPlaceholder ?? "Search..."}
@@ -145,5 +110,4 @@
   showActions={false}
   enableEdit={false}
   disableControlsWhileLoading={true}
-  onQueryChange={handleQueryChange}
 />
