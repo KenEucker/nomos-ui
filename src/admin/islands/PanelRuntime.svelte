@@ -3,6 +3,7 @@
   import { onMount } from "svelte"
   import { buildPanelCtx, parseStateFromUrl, updateUrlWithState } from "../runtime/state"
   import { notify, toastError } from "../../lib/toast"
+  import { uiState } from "../../lib/state"
   import LayoutRenderer from "./LayoutRenderer.svelte"
 
   export let panelModuleKey: string
@@ -40,6 +41,7 @@
       data = result
       nodes = panel.layout(result, ctx)
       actions = panel.commandBar(ctx, result)
+      syncTableUi(nodes, currentState)
     } catch (err) {
       error = err instanceof Error ? err.message : "Query failed"
       toastError("Panel query failed", error)
@@ -125,9 +127,31 @@
       }
       nodes = panel.layout(data, ctx)
       actions = panel.commandBar(ctx, data)
+      syncTableUi(nodes, currentState)
     } catch (err) {
       error = err instanceof Error ? err.message : "Panel load failed"
     }
+  }
+
+  const syncTableUi = (layoutNodes: any[], state: QueryState) => {
+    const visit = (nodesToVisit: any[]) => {
+      nodesToVisit.forEach((node) => {
+        if (!node) return
+        if (node.type === "table") {
+          const tableId = `${panelModuleKey}:${node.props.key}`
+          uiState.ensureTable(tableId)
+          uiState.setTableSearch(tableId, state.search ?? "")
+          uiState.setTableSort(tableId, state.sort?.key ?? null, state.sort?.dir ?? "asc")
+        }
+        if (node.type === "rows" || node.type === "fieldset" || node.type === "card") {
+          visit(node.props.nodes ?? [])
+        }
+        if (node.type === "columns") {
+          node.props.columns?.forEach((column: any) => visit(column.nodes ?? []))
+        }
+      })
+    }
+    visit(layoutNodes)
   }
 
   onMount(() => {

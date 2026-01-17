@@ -78,6 +78,16 @@ const createUiState = () => {
       }))
     )
 
+  const setTableSort = (tableId: string, sortKey: string | null, sortDir: SortDir) =>
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        sortKey,
+        sortDir,
+        page: 1,
+      }))
+    )
+
   const resetTable = (tableId: string) =>
     update((s) => ({ ...s, tables: { ...s.tables, [tableId]: defaultTableState() } }))
 
@@ -86,6 +96,7 @@ const createUiState = () => {
     ensureTable,
     setTableSearch,
     toggleTableSort,
+    setTableSort,
     setTablePage,
     setTablePageSize,
     resetTable,

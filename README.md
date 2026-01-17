@@ -90,7 +90,8 @@ npm run dev
 
 ## Admin Panels (Orchid-style runtime)
 
-Admin panels live next to their Astro pages. For example, `/admin/p/users` is backed by:
+Admin panels live next to their Astro pages. The default `/admin` route redirects to `/admin/p/users`,
+which is backed by:
 
 - `src/pages/admin/p/users.astro`
 - `src/pages/admin/p/users.panel.ts`
