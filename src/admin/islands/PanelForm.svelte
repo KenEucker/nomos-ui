@@ -6,7 +6,7 @@
   import { Textarea } from "../../components/ui/textarea"
   import { Checkbox } from "../../components/ui/checkbox"
   import { NativeSelect, NativeSelectOption } from "../../components/ui/native-select"
-  import type { FieldDef } from "../types"
+  import type { FieldDef } from "../lib/types"
 
   export let id: string
   export let title: string | undefined = undefined

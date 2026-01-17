@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ActionDescriptor } from "../types"
+  import type { ActionDescriptor } from "../lib/types"
 
   export let title: string
   export let subtitle: string | undefined = undefined

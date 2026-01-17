@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ActionDescriptor, MethodAction, PanelModule, PanelCtx, QueryState } from "../types"
-  import type { ResourcePanelConfig } from "../runtime/resource-panel"
+  import type { ActionDescriptor, MethodAction, PanelModule, PanelCtx, QueryState } from "../lib/types"
+  import type { ResourcePanelConfig } from "../lib/resource-panel"
   import { onMount } from "svelte"
-  import { buildPanelCtx, parseStateFromUrl, updateUrlWithState } from "../runtime/state"
+  import { buildPanelCtx, parseStateFromUrl, updateUrlWithState } from "../lib/state"
   import { notify, toastError } from "../../lib/toast"
   import { uiState } from "../../lib/state"
   import LayoutRenderer from "./LayoutRenderer.svelte"
@@ -23,7 +23,7 @@
   let currentState: QueryState = parseStateFromUrl(
     new URL(typeof window === "undefined" ? href : window.location.href)
   )
-  const panelModules = import.meta.glob(["/src/pages/admin/p/**/*.panel.ts", "/src/admin/resource.panel.ts"])
+  const panelModules = import.meta.glob(["/src/pages/**/*.panel.ts", "/src/admin/lib/resource.panel.ts"])
 
   const buildClientCtx = (): PanelCtx => {
     const url = new URL(window.location.href)

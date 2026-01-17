@@ -1,6 +1,6 @@
 import type { ResourceDefinition, ColumnDef, FieldDef } from "../../lib/types"
-import { Layouts } from "../layouts"
-import type { ActionDescriptor, PanelModule } from "../types"
+import { Layouts } from "./layouts"
+import type { ActionDescriptor, PanelModule } from "./types"
 
 export type ResourcePanelMode = "list" | "create" | "edit" | "view"
 

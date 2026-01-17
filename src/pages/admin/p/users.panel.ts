@@ -1,5 +1,5 @@
-import { Layouts } from "../../../admin/layouts"
-import type { PanelModule } from "../../../admin/types"
+import { Layouts } from "../../../admin/lib/layouts"
+import type { PanelModule } from "../../../admin/lib/types"
 
 const title = "Users"
 const subtitle = "Directory of workspace users."

@@ -1,4 +1,4 @@
-import type { PanelCtx, QueryState } from "../types"
+import type { PanelCtx, QueryState } from "./types"
 
 const parseQueryParams = (url: URL): Record<string, string | string[]> => {
   const result: Record<string, string | string[]> = {}

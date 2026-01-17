@@ -2,8 +2,8 @@
 import "../../styles/global.css"
 import { Toaster } from "../../components/ui/sonner"
 import PanelRuntime from "../islands/PanelRuntime.svelte"
-import { buildPanelCtx } from "../runtime/state"
-import type { PanelModule } from "../types"
+import { buildPanelCtx } from "../lib/state"
+import type { PanelModule } from "../lib/types"
 
 const { panel, panelModuleKey } = Astro.props as {
   panel: PanelModule
