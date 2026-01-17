@@ -211,6 +211,11 @@ export type ResourceMenu = {
 
 export type ResourceListConfig = {
   columns?: ColumnDef[]
+  rowActions?: {
+    view?: boolean
+    edit?: boolean
+    delete?: boolean
+  }
   defaultSort?: {
     key: string
     direction: "asc" | "desc"
