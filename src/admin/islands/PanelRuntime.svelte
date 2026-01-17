@@ -9,12 +9,13 @@
   export let panelModuleKey: string
   export let initialData: Record<string, any> | null = null
   export let initialNodes: any[] = []
+  export let initialCommands: ActionDescriptor[] = []
   export let href: string
 
   let panel: PanelModule | null = null
   let data: Record<string, any> | null = initialData
   let nodes = initialNodes
-  let actions: ActionDescriptor[] = []
+  let commands: ActionDescriptor[] = initialCommands
   let error: string | null = null
   let loading = false
   let currentState: QueryState = parseStateFromUrl(
@@ -40,7 +41,7 @@
       }
       data = result
       nodes = panel.layout(result, ctx)
-      actions = panel.commandBar(ctx, result)
+      commands = panel.commandBar(ctx, result)
       syncTableUi(nodes, currentState)
     } catch (err) {
       error = err instanceof Error ? err.message : "Query failed"
@@ -91,12 +92,12 @@
     }
   }
 
-  const handleAction = async (action: ActionDescriptor) => {
-    if (action.type === "link") {
-      window.location.href = action.href
+  const handleCommand = async (command: ActionDescriptor) => {
+    if (command.type === "link") {
+      window.location.href = command.href
       return
     }
-    await executeMethodAction(action)
+    await executeMethodAction(command)
   }
 
   const handleStateChange = (next: QueryState) => {
@@ -128,7 +129,7 @@
         throw new Error("Panel query must return a keyed data bag")
       }
       nodes = panel.layout(data, ctx)
-      actions = panel.commandBar(ctx, data)
+      commands = panel.commandBar(ctx, data)
       syncTableUi(nodes, currentState)
     } catch (err) {
       error = err instanceof Error ? err.message : "Panel load failed"
@@ -167,32 +168,6 @@
 </script>
 
 <div class="space-y-6">
-  {#if actions.length}
-    <div class="rounded-xl border bg-card p-4">
-      <div class="flex flex-wrap gap-2">
-        {#each actions as action (action.label)}
-          {#if action.type === "link"}
-            <button
-              class="rounded-md border px-4 py-2 text-sm font-medium"
-              type="button"
-              on:click={() => handleAction(action)}
-            >
-              {action.label}
-            </button>
-          {:else}
-            <button
-              class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-              type="button"
-              on:click={() => handleAction(action)}
-            >
-              {action.label}
-            </button>
-          {/if}
-        {/each}
-      </div>
-    </div>
-  {/if}
-
   {#if error}
     <div class="rounded-xl border border-destructive bg-destructive/10 p-4 text-destructive">
       {error}
@@ -207,6 +182,8 @@
       state={currentState}
       tableIdPrefix={panelModuleKey}
       onStateChange={handleStateChange}
+      {commands}
+      onCommand={handleCommand}
     />
   {/if}
 </div>

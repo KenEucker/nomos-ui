@@ -98,6 +98,14 @@ export type StatNode = {
   }
 }
 
+export type HeaderNode = {
+  type: "header"
+  props: {
+    title: string
+    subtitle?: string
+  }
+}
+
 export type LayoutNode =
   | RowsNode
   | ColumnsNode
@@ -106,6 +114,7 @@ export type LayoutNode =
   | FieldsetNode
   | TextNode
   | StatNode
+  | HeaderNode
 
 export type PanelModule = {
   id: string

@@ -2,6 +2,7 @@ import type {
   CardNode,
   ColumnsNode,
   FieldsetNode,
+  HeaderNode,
   RowsNode,
   LayoutNode,
   StatNode,
@@ -42,6 +43,11 @@ export const Layouts = {
 
   stat: (props: StatNode["props"]): StatNode => ({
     type: "stat",
+    props,
+  }),
+
+  header: (props: HeaderNode["props"]): HeaderNode => ({
+    type: "header",
     props,
   }),
 }
