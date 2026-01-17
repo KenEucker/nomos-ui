@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ActionDescriptor, MethodAction, PanelModule, PanelCtx, QueryState } from "../types"
+  import type { ResourcePanelConfig } from "../runtime/resource-panel"
   import { onMount } from "svelte"
   import { buildPanelCtx, parseStateFromUrl, updateUrlWithState } from "../runtime/state"
   import { notify, toastError } from "../../lib/toast"
@@ -11,6 +12,7 @@
   export let initialNodes: any[] = []
   export let initialCommands: ActionDescriptor[] = []
   export let href: string
+  export let resourceConfig: ResourcePanelConfig | null = null
 
   let panel: PanelModule | null = null
   let data: Record<string, any> | null = initialData
@@ -110,6 +112,10 @@
 
   const init = async () => {
     try {
+      if (resourceConfig) {
+        ;(window as unknown as { __RESOURCE_PANEL_CONFIG__?: ResourcePanelConfig }).__RESOURCE_PANEL_CONFIG__ =
+          resourceConfig
+      }
       const loader = panelModules[panelModuleKey]
       if (!loader) {
         throw new Error(`Unknown panel module: ${panelModuleKey}`)

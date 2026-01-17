@@ -203,6 +203,7 @@ export const createResourcePanel = ({
             description: `Showing ${labels.labelPlural.toLowerCase()} from ${resource.endpoints.list}.`,
             rowsKey: listKey,
             paginationKey: "meta",
+            serverSide: true,
             columns,
             rowIdKey: "id",
             enableEdit: true,

@@ -21,7 +21,8 @@ if (!data || typeof data !== "object" || Array.isArray(data)) {
 
 const nodes = panel.layout(data, ctx)
 const commands = panel.commandBar(ctx, data)
-const serializedConfig = JSON.stringify(resourceConfig)
+const clientResource = { ...resourceConfig.resource, schema: undefined }
+const clientConfig = { ...resourceConfig, resource: clientResource }
 ---
 
 <div class="min-h-screen bg-background text-foreground">
@@ -33,13 +34,10 @@ const serializedConfig = JSON.stringify(resourceConfig)
         initialNodes={nodes}
         initialCommands={commands}
         href={Astro.url.toString()}
+        resourceConfig={clientConfig}
         client:load
       />
     </div>
   </div>
   <Toaster client:load />
 </div>
-
-<script is:inline>
-  window.__RESOURCE_PANEL_CONFIG__ = {serializedConfig};
-</script>

@@ -98,7 +98,9 @@
         </div>
       </div>
     {:else if node.type === "table"}
-      {@const pagination = node.props.paginationKey ? data[node.props.paginationKey] ?? {} : null}
+      {@const serverSide = node.props.serverSide ?? false}
+      {@const pagination =
+        serverSide && node.props.paginationKey ? data[node.props.paginationKey] ?? {} : null}
       <DataTable
         id={node.props.key}
         tableIdPrefix={tableIdPrefix}
@@ -114,11 +116,11 @@
         loading={false}
         showSearch={node.props.searchable ?? true}
         searchPlaceholder={node.props.searchPlaceholder}
-        page={pagination?.page}
-        pageSize={pagination?.pageSize}
-        total={pagination?.total}
+        page={serverSide ? pagination?.page : undefined}
+        pageSize={serverSide ? pagination?.pageSize : undefined}
+        total={serverSide ? pagination?.total : undefined}
         onQueryChange={
-          node.props.paginationKey
+          serverSide && node.props.paginationKey
             ? async (query) => {
                 const next = {
                   page: query.page,

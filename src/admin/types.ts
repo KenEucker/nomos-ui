@@ -90,6 +90,7 @@ export type TableNode = {
     rowsKey: string
     columns: ColumnDef[]
     paginationKey?: string
+    serverSide?: boolean
     rowIdKey?: string
     enableEdit?: boolean
     saveEndpoint?: string
