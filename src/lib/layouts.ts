@@ -1,23 +1,29 @@
 import type {
-  CardGridNode,
   CardNode,
-  ErrorBoxNode,
+  ColumnsNode,
+  FieldsetNode,
   FormNode,
+  HeaderNode,
+  RowsNode,
   LayoutNode,
-  SectionNode,
-  TabPanelNode,
+  StatNode,
   TableNode,
-  TimeSeriesNode,
+  TextNode,
 } from "./types"
 
 export const Layouts = {
-  card: (props: CardNode["props"]): CardNode => ({
-    type: "card",
-    props,
+  rows: (nodes: LayoutNode[]): RowsNode => ({
+    type: "rows",
+    props: { nodes },
   }),
 
-  cardGrid: (props: CardGridNode["props"]): CardGridNode => ({
-    type: "cardGrid",
+  columns: (columns: ColumnsNode["props"]["columns"]): ColumnsNode => ({
+    type: "columns",
+    props: { columns },
+  }),
+
+  card: (props: CardNode["props"]): CardNode => ({
+    type: "card",
     props,
   }),
 
@@ -26,18 +32,8 @@ export const Layouts = {
     props,
   }),
 
-  section: (props: Omit<SectionNode["props"], "children">, children: LayoutNode[]): SectionNode => ({
-    type: "section",
-    props: { ...props, children },
-  }),
-
-  errorBox: (props: ErrorBoxNode["props"]): ErrorBoxNode => ({
-    type: "errorBox",
-    props,
-  }),
-
-  timeSeries: (props: TimeSeriesNode["props"]): TimeSeriesNode => ({
-    type: "timeSeries",
+  fieldset: (props: FieldsetNode["props"]): FieldsetNode => ({
+    type: "fieldset",
     props,
   }),
 
@@ -46,8 +42,18 @@ export const Layouts = {
     props,
   }),
 
-  tabs: (props: TabPanelNode["props"]): TabPanelNode => ({
-    type: "tabs",
+  text: (props: TextNode["props"]): TextNode => ({
+    type: "text",
+    props,
+  }),
+
+  stat: (props: StatNode["props"]): StatNode => ({
+    type: "stat",
+    props,
+  }),
+
+  header: (props: HeaderNode["props"]): HeaderNode => ({
+    type: "header",
     props,
   }),
 }

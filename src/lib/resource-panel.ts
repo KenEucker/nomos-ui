@@ -1,4 +1,4 @@
-import type { ResourceDefinition, ColumnDef, FieldDef } from "../../lib/types"
+import type { ResourceDefinition, ColumnDef, FieldDef } from "./types"
 import { Layouts } from "./layouts"
 import type { ActionDescriptor, PanelModule } from "./types"
 

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { z } from "zod"
-  import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../../components/ui/card"
-  import { Button } from "../../components/ui/button"
-  import { Input } from "../../components/ui/input"
-  import { Textarea } from "../../components/ui/textarea"
-  import { Checkbox } from "../../components/ui/checkbox"
-  import { NativeSelect, NativeSelectOption } from "../../components/ui/native-select"
+  import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card"
+  import { Button } from "../components/ui/button"
+  import { Input } from "../components/ui/input"
+  import { Textarea } from "../components/ui/textarea"
+  import { Checkbox } from "../components/ui/checkbox"
+  import { NativeSelect, NativeSelectOption } from "../components/ui/native-select"
   import type { FieldDef } from "../lib/types"
 
   export let id: string
