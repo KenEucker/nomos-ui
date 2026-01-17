@@ -1,32 +1,7 @@
 ---
-import "../../../styles/global.css"
-import { Toaster } from "../../../components/ui/sonner"
-import PanelRuntime from "../../../admin/islands/PanelRuntime.svelte"
+import PanelPage from "../../../admin/components/PanelPage.astro"
 import usersPanel from "./users.panel"
-import { buildPanelCtx } from "../../../admin/runtime/state"
-
-const ctx = buildPanelCtx(Astro.url, {})
-const data = await usersPanel.query(ctx)
-
-if (!data || typeof data !== "object" || Array.isArray(data)) {
-  throw new Error("Panel query must return a keyed data bag")
-}
-
-const nodes = usersPanel.layout(data, ctx)
 const panelModuleKey = "/src/pages/admin/p/users.panel.ts"
 ---
 
-<div class="min-h-screen bg-background text-foreground">
-  <div class="mx-auto max-w-6xl px-6 py-10">
-    <div class="space-y-6">
-      <PanelRuntime
-        panelModuleKey={panelModuleKey}
-        initialData={data}
-        initialNodes={nodes}
-        href={Astro.url.toString()}
-        client:load
-      />
-    </div>
-  </div>
-  <Toaster client:load />
-</div>
+<PanelPage panel={usersPanel} panelModuleKey={panelModuleKey} />
