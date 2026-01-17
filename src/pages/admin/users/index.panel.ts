@@ -1,8 +1,25 @@
 import { Layouts } from "$lib/layouts"
-import type { PanelModule } from "$lib/types"
+import type { PanelModule, RowAction } from "$lib/types"
+import { usersResource } from "./users.resource"
 
 const title = "Users"
 const subtitle = "Directory of workspace users."
+const basePath = "/admin/users"
+
+const resolveRowActions = (): RowAction[] => {
+  const config = usersResource.list?.rowActions
+  const actions: RowAction[] = []
+  if (config?.view ?? true) {
+    actions.push({ id: "view", label: "View", variant: "secondary" })
+  }
+  if (config?.edit ?? true) {
+    actions.push({ id: "edit", label: "Edit", variant: "secondary" })
+  }
+  if (config?.delete ?? true) {
+    actions.push({ id: "delete", label: "Delete", variant: "destructive" })
+  }
+  return actions
+}
 
 const usersPanel: PanelModule = {
   id: "users",
@@ -55,6 +72,9 @@ const usersPanel: PanelModule = {
           { key: "team", label: "Team", sortable: true, hideOnMobile: true },
           { key: "status", label: "Status", sortable: true },
         ],
+        rowActions: resolveRowActions(),
+        rowActionBasePath: basePath,
+        rowActionDeleteEndpoint: usersResource.endpoints.delete,
       }),
     ]),
   ],

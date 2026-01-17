@@ -28,6 +28,11 @@ export const usersResource: ResourceDefinition = createResourceDefinition({
       { key: "team", label: "Team", sortable: true, hideOnMobile: true },
       { key: "status", label: "Status", sortable: true },
     ],
+    rowActions: {
+      view: true,
+      edit: true,
+      delete: true,
+    },
     defaultSort: {
       key: "name",
       direction: "asc",

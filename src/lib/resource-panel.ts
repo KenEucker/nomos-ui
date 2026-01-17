@@ -1,4 +1,4 @@
-import type { ResourceDefinition, ColumnDef, FieldDef } from "./types"
+import type { ResourceDefinition, ColumnDef, FieldDef, RowAction } from "./types"
 import { Layouts } from "./layouts"
 import type { ActionDescriptor, PanelModule } from "./types"
 
@@ -106,6 +106,13 @@ export const createResourcePanel = ({
   const createHref = `${basePath}/create`
   const editHref = (id: string) => `${basePath}/edit?id=${id}`
   const viewHref = (id: string) => `${basePath}/view?id=${id}`
+  const rowActionConfig = resource.list?.rowActions
+  const rowActionCandidates: Array<RowAction | null> = [
+    rowActionConfig?.view ?? true ? { id: "view", label: "View", variant: "secondary" } : null,
+    rowActionConfig?.edit ?? true ? { id: "edit", label: "Edit", variant: "secondary" } : null,
+    rowActionConfig?.delete ?? true ? { id: "delete", label: "Delete", variant: "destructive" } : null,
+  ]
+  const rowActions = rowActionCandidates.filter((action): action is RowAction => Boolean(action))
 
   const normalizeId = (value?: string | string[] | null) => {
     const raw = Array.isArray(value) ? value[0] : value
@@ -226,11 +233,7 @@ export const createResourcePanel = ({
             saveMethod: "PATCH",
             searchable: resource.list?.searchable ?? true,
             searchPlaceholder: resource.list?.searchPlaceholder,
-            rowActions: [
-              { id: "view", label: "View", variant: "secondary" },
-              { id: "edit", label: "Edit", variant: "secondary" },
-              { id: "delete", label: "Delete", variant: "destructive" },
-            ],
+            rowActions: rowActions.length ? rowActions : undefined,
             rowActionBasePath: basePath,
             rowActionDeleteEndpoint: resource.endpoints.delete,
           }),
