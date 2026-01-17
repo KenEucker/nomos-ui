@@ -12,7 +12,7 @@ const { panel, panelModuleKey, resourceConfig } = Astro.props as {
   resourceConfig: ResourcePanelConfig
 }
 
-const ctx = buildPanelCtx(Astro.url, {})
+const ctx = buildPanelCtx(new URL(Astro.request.url), {})
 const data = await panel.query(ctx)
 
 if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -33,7 +33,7 @@ const clientConfig = { ...resourceConfig, resource: clientResource }
         initialData={data}
         initialNodes={nodes}
         initialCommands={commands}
-        href={Astro.url.toString()}
+        href={Astro.request.url}
         resourceConfig={clientConfig}
         client:load
       />
