@@ -51,6 +51,32 @@ export const listUsers = async (params: {
   return withLatency({ items, total })
 }
 
+export const getUser = async (id: string) => {
+  const user = USERS.find((entry) => entry.id === id) ?? null
+  return withLatency(user)
+}
+
+export const createUser = async (payload: Partial<User>) => {
+  const id = payload.id ?? `user-${USERS.length + 1}`
+  const next: User = {
+    id,
+    name: payload.name ?? "New User",
+    email: payload.email ?? `${id}@nomos.local`,
+    role: payload.role ?? "Viewer",
+    team: payload.team ?? "Atlas",
+    status: payload.status ?? "Invited",
+  }
+  USERS = [next, ...USERS]
+  return withLatency(next)
+}
+
+export const deleteUser = async (id: string) => {
+  const existing = USERS.find((entry) => entry.id === id) ?? null
+  if (!existing) return withLatency(null)
+  USERS = USERS.filter((entry) => entry.id !== id)
+  return withLatency(existing)
+}
+
 export const listRoles = async (search = "") => {
   const roles = ["Admin", "Editor", "Viewer", "Billing", "Support"]
   const normalized = search.trim().toLowerCase()

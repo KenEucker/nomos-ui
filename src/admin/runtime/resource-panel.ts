@@ -1,0 +1,284 @@
+import type { ResourceDefinition, ColumnDef, FieldDef } from "../../lib/types"
+import { Layouts } from "../layouts"
+import type { ActionDescriptor, PanelModule } from "../types"
+
+export type ResourcePanelMode = "list" | "create" | "edit" | "view"
+
+export type ResourcePanelConfig = {
+  resource: ResourceDefinition
+  mode: ResourcePanelMode
+  params?: Record<string, string>
+  basePath?: string
+}
+
+const getLabels = (resource: ResourceDefinition) => {
+  if ("labels" in resource && resource.labels) {
+    return resource.labels
+  }
+
+  return {
+    label: resource.label ?? resource.name,
+    labelPlural: resource.labelPlural ?? resource.name,
+  }
+}
+
+const resolveListKey = (resource: ResourceDefinition) => resource.dataKey ?? resource.name
+
+const resolveSingleKey = (resource: ResourceDefinition) =>
+  resource.singleDataKey ?? resource.dataKey ?? resource.name
+
+const interpolateEndpoint = (endpoint: string, params?: Record<string, string>) =>
+  endpoint.replace(/\{(\w+)\}/g, (_, key) => params?.[key] ?? "")
+
+const buildListUrl = (endpoint: string, state: { page: number; pageSize: number; search?: string; sort?: {
+  key: string
+  dir: "asc" | "desc"
+} }) => {
+  const url = new URL(endpoint, "http://local")
+  url.searchParams.set("page", String(state.page))
+  url.searchParams.set("pageSize", String(state.pageSize))
+  if (state.search) {
+    url.searchParams.set("search", state.search)
+  }
+  if (state.sort?.key) {
+    url.searchParams.set("sort", `${state.sort.key}:${state.sort.dir}`)
+  }
+  return `${url.pathname}${url.search}`
+}
+
+const unwrapListResponse = (response: any, resource: ResourceDefinition) => {
+  const key = resolveListKey(resource)
+  const payload = response?.data ?? response ?? {}
+  const candidate =
+    payload?.[key] ?? response?.[key] ?? payload?.[resource.name] ?? response?.[resource.name] ?? payload
+  const items = Array.isArray(candidate) ? candidate : []
+  const total = response?.meta?.total ?? response?.total ?? items.length
+  return { items, total }
+}
+
+const unwrapSingleResponse = (response: any, resource: ResourceDefinition) => {
+  const key = resolveSingleKey(resource)
+  const payload = response?.data ?? response ?? {}
+  const candidate =
+    payload?.[key] ?? response?.[key] ?? payload?.[resource.name] ?? response?.[resource.name] ?? payload
+  const record = candidate && !Array.isArray(candidate) ? candidate : null
+  return { record, key }
+}
+
+const resolveFields = (resource: ResourceDefinition): FieldDef[] => {
+  if (resource.form?.fields?.length) return resource.form.fields
+  if (resource.list?.columns?.length) {
+    return resource.list.columns.map((column) => ({
+      name: column.key,
+      label: column.label,
+      type: "text",
+    }))
+  }
+  return []
+}
+
+const resolveColumns = (resource: ResourceDefinition): ColumnDef[] => {
+  if (resource.list?.columns?.length) return resource.list.columns
+  if (resource.form?.fields?.length) {
+    return resource.form.fields.map((field) => ({
+      key: field.name,
+      label: field.label,
+    }))
+  }
+  return []
+}
+
+export const createResourcePanel = ({
+  resource,
+  mode,
+  params,
+  basePath = `/admin/${resource.name}`,
+}: ResourcePanelConfig): PanelModule => {
+  const labels = getLabels(resource)
+  const listKey = resolveListKey(resource)
+  const singleKey = resolveSingleKey(resource)
+  const fields = resolveFields(resource)
+  const columns = resolveColumns(resource)
+
+  const listHref = basePath
+  const createHref = `${basePath}/create`
+  const editHref = (id: string) => `${basePath}/edit?id=${id}`
+  const viewHref = (id: string) => `${basePath}/view?id=${id}`
+
+  const resolveId = (ctxParams: Record<string, string>, ctxQuery?: Record<string, string | string[]>) =>
+    params?.id ?? ctxParams?.id ?? (ctxQuery?.id as string | undefined) ?? (params?.["id"] ?? "")
+
+  const commandBar = (ctxParams: Record<string, string>, ctxQuery?: Record<string, string | string[]>): ActionDescriptor[] => {
+    const id = resolveId(ctxParams, ctxQuery)
+    switch (mode) {
+      case "list":
+        return [{ type: "link", label: `New ${labels.label}`, href: createHref }]
+      case "create":
+        return [{ type: "link", label: `Back to ${labels.labelPlural}`, href: listHref }]
+      case "edit":
+        return [
+          { type: "link", label: `View ${labels.label}`, href: viewHref(id) },
+          { type: "link", label: `Back to ${labels.labelPlural}`, href: listHref },
+          {
+            type: "method",
+            label: `Delete ${labels.label}`,
+            endpoint: interpolateEndpoint(resource.endpoints.delete, { id }),
+            method: "DELETE",
+            confirm: {
+              title: `Delete ${labels.label}?`,
+              body: `This will permanently remove the ${labels.label.toLowerCase()}.`,
+            },
+            after: "navigate",
+            toast: { success: `${labels.label} deleted` },
+          },
+        ]
+      case "view":
+        return [
+          { type: "link", label: `Edit ${labels.label}`, href: editHref(id) },
+          { type: "link", label: `Back to ${labels.labelPlural}`, href: listHref },
+        ]
+      default:
+        return []
+    }
+  }
+
+  const query: PanelModule["query"] = async (ctx) => {
+    if (mode === "list") {
+      const pageSize =
+        ctx.query.pageSize !== undefined
+          ? ctx.state.pageSize
+          : resource.list?.pageSize ?? ctx.state.pageSize
+      const sort =
+        ctx.state.sort ??
+        (resource.list?.defaultSort
+          ? { key: resource.list.defaultSort.key, dir: resource.list.defaultSort.direction }
+          : undefined)
+      const url = buildListUrl(resource.endpoints.list, {
+        page: ctx.state.page,
+        pageSize,
+        search: ctx.state.search,
+        sort,
+      })
+      const response = await fetch(new URL(url, ctx.url)).then((res) => res.json())
+      const { items, total } = unwrapListResponse(response, resource)
+      return {
+        [listKey]: items,
+        meta: {
+          total,
+          page: ctx.state.page,
+          pageSize,
+        },
+      }
+    }
+
+    if (mode === "create") {
+      return {
+        [singleKey]: {},
+      }
+    }
+
+    const id = params?.id ?? ctx.params?.id ?? (ctx.query.id as string | undefined)
+    if (!id) {
+      throw new Error("Missing resource id")
+    }
+    const endpoint = interpolateEndpoint(resource.endpoints.get, { id })
+    const response = await fetch(new URL(endpoint, ctx.url)).then((res) => res.json())
+    const { record } = unwrapSingleResponse(response, resource)
+    return {
+      [singleKey]: record ?? {},
+    }
+  }
+
+  const layout: PanelModule["layout"] = (data, ctx) => {
+    if (mode === "list") {
+      return [
+        Layouts.rows([
+          Layouts.header({
+            title: labels.labelPlural,
+            subtitle: `Manage ${labels.labelPlural.toLowerCase()}.`,
+          }),
+          Layouts.table({
+            key: resource.name,
+            title: labels.labelPlural,
+            description: `Showing ${labels.labelPlural.toLowerCase()} from ${resource.endpoints.list}.`,
+            rowsKey: listKey,
+            paginationKey: "meta",
+            columns,
+            rowIdKey: "id",
+            enableEdit: true,
+            saveEndpoint: resource.endpoints.update,
+            saveMethod: "PATCH",
+            searchable: resource.list?.searchable ?? true,
+            searchPlaceholder: resource.list?.searchPlaceholder,
+          }),
+        ]),
+      ]
+    }
+
+    if (mode === "view") {
+      return [
+        Layouts.rows([
+          Layouts.header({
+            title: `${labels.label} Details`,
+            subtitle: `Viewing ${labels.label.toLowerCase()} information.`,
+          }),
+          Layouts.card({
+            title: labels.label,
+            description: `Details from ${resource.endpoints.get}.`,
+            nodes: fields.map((field) =>
+              Layouts.stat({
+                label: field.label,
+                valueKey: `${singleKey}.${field.name}`,
+              })
+            ),
+          }),
+        ]),
+      ]
+    }
+
+    const formTitle = mode === "create" ? `Create ${labels.label}` : `Edit ${labels.label}`
+    const submitLabel = mode === "create" ? `Create ${labels.label}` : `Save ${labels.label}`
+    const id = params?.id ?? ctx.params?.id ?? (ctx.query.id as string | undefined) ?? ""
+    const endpoint =
+      mode === "create"
+        ? resource.endpoints.create
+        : interpolateEndpoint(resource.endpoints.update, { id })
+
+    return [
+      Layouts.rows([
+        Layouts.header({
+          title: formTitle,
+          subtitle:
+            mode === "create"
+              ? `Add a new ${labels.label.toLowerCase()}.`
+              : `Update ${labels.label.toLowerCase()} details.`,
+        }),
+        Layouts.form({
+          id: `${resource.name}-${mode}-form`,
+          title: formTitle,
+          description:
+            mode === "create"
+              ? `Create a new ${labels.label.toLowerCase()} record.`
+              : `Edit the ${labels.label.toLowerCase()} record.`,
+          schema: resource.schema,
+          fields,
+          submitLabel,
+          submitEndpoint: endpoint,
+          submitMethod: mode === "create" ? "POST" : "PATCH",
+          initialValuesKey: singleKey,
+          after: "navigate",
+          redirectTo: mode === "create" ? listHref : viewHref(id),
+        }),
+      ]),
+    ]
+  }
+
+  return {
+    id: `${resource.name}-${mode}`,
+    title: labels.labelPlural,
+    subtitle: labels.label,
+    query,
+    layout,
+    commandBar: (ctx) => commandBar(ctx.params, ctx.query),
+  }
+}

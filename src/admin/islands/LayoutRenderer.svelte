@@ -2,6 +2,7 @@
   import type { ActionDescriptor, LayoutNode, QueryState } from "../types"
   import DataTable from "../../components/DataTable.svelte"
   import PanelHeader from "../components/PanelHeader.svelte"
+  import PanelForm from "./PanelForm.svelte"
 
   export let nodes: LayoutNode[] = []
   export let data: Record<string, any> = {}
@@ -97,6 +98,7 @@
         </div>
       </div>
     {:else if node.type === "table"}
+      {@const pagination = node.props.paginationKey ? data[node.props.paginationKey] ?? {} : null}
       <DataTable
         id={node.props.key}
         tableIdPrefix={tableIdPrefix}
@@ -105,22 +107,65 @@
         columns={node.props.columns}
         rows={data[node.props.rowsKey] ?? []}
         dataKey={node.props.rowsKey}
-        rowIdKey="id"
+        rowIdKey={node.props.rowIdKey ?? "id"}
         showSelection={false}
         showActions={true}
-        enableEdit={true}
+        enableEdit={node.props.enableEdit ?? true}
         loading={false}
-        onSave={async ({ row, patch }) => {
-          const response = await fetch("/api/users", {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ id: row.id, patch }),
-          })
-          if (!response.ok) {
-            throw new Error(`Save failed with status ${response.status}`)
-          }
-          onStateChange(state)
-        }}
+        showSearch={node.props.searchable ?? true}
+        searchPlaceholder={node.props.searchPlaceholder}
+        page={pagination?.page}
+        pageSize={pagination?.pageSize}
+        total={pagination?.total}
+        onQueryChange={
+          node.props.paginationKey
+            ? async (query) => {
+                const next = {
+                  page: query.page,
+                  pageSize: query.pageSize,
+                  search: query.search || undefined,
+                  sort: query.sortKey
+                    ? { key: query.sortKey, dir: query.sortDir }
+                    : undefined,
+                }
+                onStateChange(next)
+              }
+            : undefined
+        }
+        onSave={
+          node.props.saveEndpoint
+            ? async ({ row, patch }) => {
+                const endpoint = node.props.saveEndpoint!.includes("{id}")
+                  ? node.props.saveEndpoint!.replace("{id}", String(row.id))
+                  : node.props.saveEndpoint!
+                const response = await fetch(endpoint, {
+                  method: node.props.saveMethod ?? "PATCH",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ id: row.id, patch }),
+                })
+                if (!response.ok) {
+                  throw new Error(`Save failed with status ${response.status}`)
+                }
+                onStateChange(state)
+              }
+            : undefined
+        }
+      />
+    {:else if node.type === "form"}
+      <PanelForm
+        id={node.props.id}
+        title={node.props.title}
+        description={node.props.description}
+        schema={node.props.schema}
+        fields={node.props.fields}
+        submitLabel={node.props.submitLabel}
+        submitEndpoint={node.props.submitEndpoint}
+        submitMethod={node.props.submitMethod}
+        initialValuesKey={node.props.initialValuesKey}
+        after={node.props.after}
+        redirectTo={node.props.redirectTo}
+        {data}
+        onRefresh={() => onStateChange(state)}
       />
     {:else if node.type === "fieldset"}
       <fieldset class="space-y-4 rounded-xl border bg-card p-6">
