@@ -1,85 +1,41 @@
 # Nomos-UI
 
-Nomos-UI provides a panel-first admin UI system inspired by Laravel Orchid. Panels are declarative, typed, and composed from standard primitives (cards, tables, forms, tabs, charts) so that both humans and LLMs can reliably build admin experiences.
+Nomos-UI is an Astro + Svelte admin UI runtime inspired by Laravel Orchid. The UI is driven by panel modules that fetch data and describe layout nodes. Astro handles SSR for the first paint, while a Svelte island rehydrates and refreshes panel data on the client.
 
-## Panel model
+## Framework architecture
 
-Panels are module files (e.g. `src/pages/users.panel.ts`) that export a `PanelModule`:
+### Panel modules
+- Panels live in `src/pages/**.panel.ts` and export a `PanelModule` object from `src/lib/types.ts`.
+- A `PanelModule` has three required functions:
+  - `query(ctx)` → returns a **keyed data bag** (object) used by layouts.
+  - `layout(data, ctx)` → returns an array of layout nodes created with `Layouts` (`src/lib/layouts.ts`).
+  - `commandBar(ctx, data)` → returns action descriptors only (link or method actions).
 
-```ts
-import type { PanelModule } from "./src/lib/types"
+### SSR (Astro)
+- Astro pages import the panel module and call `query()` to get initial data.
+- The page computes layout nodes and command bar actions, then renders the `PanelRuntime` island via `PanelPage.astro` or `ResourcePanelPage.astro`.
+- The island receives **JSON-only props** such as `panelModuleKey`, `initialData`, `initialNodes`, and `href`.
 
-const panel: PanelModule = {
-  id: "users",
-  title: "Users",
-  subtitle: "Manage access",
-  schema: myZodSchema,
-  load: async (ctx) => ({ /* data */ }),
-  actions: [
-    { id: "refresh", label: "Refresh", run: ({ notify }) => notify("Loaded", "success") },
-  ],
-  layout: (data, ctx) => [/* Layouts.card(), Layouts.table(), ... */],
-}
-```
+### CSR (Svelte island)
+- `PanelRuntime.svelte` loads the panel module dynamically using:
+  ```ts
+  import.meta.glob(["/src/pages/**/*.panel.ts", "/src/lib/resource.panel.ts"])
+  ```
+- It re-runs `query()` when state changes, then rebuilds layout nodes and command actions.
+- `LayoutRenderer.svelte` renders layout nodes and always uses `src/components/DataTable.svelte` for tables.
 
-`PanelHost` renders panels as pages, modals, or embedded regions by passing a `mode`:
+### Resource panels
+- `createResourcePanel` in `src/lib/resource-panel.ts` creates list/create/edit/view panels for a resource definition.
+- `ResourcePanelPage.astro` wraps the runtime and passes a serializable `resourceConfig` to the Svelte island.
 
-```astro
-<PanelHost panel={usersPanel} mode="page" />
-```
+## Admin panels
 
-## Adding a panel
+The default admin route redirects to `/admin/users`. The user list panel is defined by:
 
-1. Create `src/pages/<name>.panel.ts` that exports a `PanelModule`.
-2. Create `src/pages/<name>.astro` and render the panel inside `AppShell`.
-3. Update navigation links if needed.
+- `src/pages/admin/users/index.astro`
+- `src/pages/admin/users/index.panel.ts`
 
-## Datatable panel example
-
-```ts
-Layouts.table({
-  id: "users",
-  title: "Directory",
-  columns: [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
-  ],
-  rows: data.users,
-  rowActions: [
-    { id: "delete", label: "Delete", variant: "destructive", run: ({ row }) => {/* ... */} },
-  ],
-  page: data.query.page,
-  pageSize: data.query.pageSize,
-  total: data.total,
-  onQueryChange: async (query) => { /* fetch rows */ },
-})
-```
-
-## Form panel example
-
-```ts
-Layouts.form({
-  id: "create-user",
-  title: "New user",
-  schema: userSchema,
-  fields: [
-    { name: "name", label: "Name", type: "text" },
-    { name: "role", label: "Role", type: "relation", loadOptions: listRoles },
-    {
-      name: "username",
-      label: "Username",
-      type: "lookup",
-      lookup: {
-        title: "Generate username",
-        fields: [{ name: "name", label: "Display name" }],
-        onLookup: runUsernameLookup,
-        applyResult: (result) => ({ username: result.username }),
-      },
-    },
-  ],
-  onSubmit: async (values) => {/* ... */},
-})
-```
+List/create/edit/view pages under `/admin/users` use the same runtime and layouts.
 
 ## Development
 
@@ -87,14 +43,3 @@ Layouts.form({
 npm install
 npm run dev
 ```
-
-## Admin Panels (Orchid-style runtime)
-
-Admin panels live next to their Astro pages. The default `/admin` route redirects to `/admin/p/users`,
-which is backed by:
-
-- `src/pages/admin/p/users.astro`
-- `src/pages/admin/p/users.panel.ts`
-
-Panels export `query`, `layout`, and `commandBar`, and the runtime hydrates in the Svelte island
-using a `panelModuleKey` (string) rather than passing module instances.
