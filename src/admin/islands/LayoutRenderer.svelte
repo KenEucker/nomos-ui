@@ -56,6 +56,8 @@
           {state}
           {tableIdPrefix}
           {onStateChange}
+          {commands}
+          {onCommand}
         />
       </div>
     {:else if node.type === "columns"}
@@ -68,6 +70,8 @@
               {state}
               {tableIdPrefix}
               {onStateChange}
+              {commands}
+              {onCommand}
             />
           </div>
         {/each}
@@ -87,6 +91,8 @@
             {state}
             {tableIdPrefix}
             {onStateChange}
+            {commands}
+            {onCommand}
           />
         </div>
       </div>
@@ -127,6 +133,8 @@
           {state}
           {tableIdPrefix}
           {onStateChange}
+          {commands}
+          {onCommand}
         />
       </fieldset>
     {:else if node.type === "text"}
