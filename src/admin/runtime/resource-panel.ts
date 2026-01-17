@@ -105,8 +105,16 @@ export const createResourcePanel = ({
   const editHref = (id: string) => `${basePath}/edit?id=${id}`
   const viewHref = (id: string) => `${basePath}/view?id=${id}`
 
+  const normalizeId = (value?: string | null) => {
+    const trimmed = value?.trim()
+    return trimmed ? trimmed : undefined
+  }
+
   const resolveId = (ctxParams: Record<string, string>, ctxQuery?: Record<string, string | string[]>) =>
-    params?.id ?? ctxParams?.id ?? (ctxQuery?.id as string | undefined) ?? (params?.["id"] ?? "")
+    normalizeId(params?.id) ??
+    normalizeId(ctxParams?.id) ??
+    normalizeId(ctxQuery?.id as string | undefined) ??
+    normalizeId(params?.["id"])
 
   const commandBar = (ctxParams: Record<string, string>, ctxQuery?: Record<string, string | string[]>): ActionDescriptor[] => {
     const id = resolveId(ctxParams, ctxQuery)
@@ -177,7 +185,7 @@ export const createResourcePanel = ({
       }
     }
 
-    const id = params?.id ?? ctx.params?.id ?? (ctx.query.id as string | undefined)
+    const id = resolveId(ctx.params, ctx.query)
     if (!id) {
       throw new Error("Missing resource id")
     }
@@ -206,7 +214,7 @@ export const createResourcePanel = ({
             serverSide: true,
             columns,
             rowIdKey: "id",
-            enableEdit: true,
+            enableEdit: false,
             saveEndpoint: resource.endpoints.update,
             saveMethod: "PATCH",
             searchable: resource.list?.searchable ?? true,
@@ -246,7 +254,7 @@ export const createResourcePanel = ({
 
     const formTitle = mode === "create" ? `Create ${labels.label}` : `Edit ${labels.label}`
     const submitLabel = mode === "create" ? `Create ${labels.label}` : `Save ${labels.label}`
-    const id = params?.id ?? ctx.params?.id ?? (ctx.query.id as string | undefined) ?? ""
+    const id = resolveId(ctx.params, ctx.query) ?? ""
     const endpoint =
       mode === "create"
         ? resource.endpoints.create
