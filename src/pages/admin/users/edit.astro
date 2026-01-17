@@ -1,0 +1,15 @@
+---
+import ResourcePanelPage from "../../../admin/components/ResourcePanelPage.astro"
+import { createResourcePanel } from "../../../admin/runtime/resource-panel"
+import { usersResource } from "./users.resource"
+
+const mode = "edit"
+const id = new URL(Astro.request.url).searchParams.get("id") ?? ""
+const params = { id }
+const basePath = "/admin/users"
+const panelModuleKey = "/src/pages/admin/p/resource.panel.ts"
+const panel = createResourcePanel({ resource: usersResource, mode, params, basePath })
+const resourceConfig = { resource: usersResource, mode, params, basePath }
+---
+
+<ResourcePanelPage panel={panel} panelModuleKey={panelModuleKey} resourceConfig={resourceConfig} />

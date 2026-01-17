@@ -39,6 +39,31 @@ export type ColumnDef = {
   hideOnMobile?: boolean
 }
 
+export type RowAction = {
+  id: string
+  label: string
+  variant?: "default" | "secondary" | "ghost" | "destructive"
+}
+
+export type FieldDef = {
+  name: string
+  label: string
+  type:
+    | "text"
+    | "textarea"
+    | "email"
+    | "password"
+    | "number"
+    | "checkbox"
+    | "select"
+    | "multiselect"
+    | "date"
+  placeholder?: string
+  helperText?: string
+  options?: Array<{ value: string; label: string }>
+  required?: boolean
+}
+
 export type RowsNode = {
   type: "rows"
   props: {
@@ -71,6 +96,16 @@ export type TableNode = {
     rowsKey: string
     columns: ColumnDef[]
     paginationKey?: string
+    serverSide?: boolean
+    rowIdKey?: string
+    enableEdit?: boolean
+    saveEndpoint?: string
+    saveMethod?: "POST" | "PUT" | "PATCH"
+    searchable?: boolean
+    searchPlaceholder?: string
+    rowActions?: RowAction[]
+    rowActionBasePath?: string
+    rowActionDeleteEndpoint?: string
   }
 }
 
@@ -79,6 +114,23 @@ export type FieldsetNode = {
   props: {
     title?: string
     nodes: LayoutNode[]
+  }
+}
+
+export type FormNode = {
+  type: "form"
+  props: {
+    id: string
+    title?: string
+    description?: string
+    schema?: unknown
+    fields: FieldDef[]
+    submitLabel?: string
+    submitEndpoint: string
+    submitMethod?: "POST" | "PUT" | "PATCH"
+    initialValuesKey?: string
+    after?: "refresh" | "navigate"
+    redirectTo?: string
   }
 }
 
@@ -115,6 +167,7 @@ export type LayoutNode =
   | TextNode
   | StatNode
   | HeaderNode
+  | FormNode
 
 export type PanelModule = {
   id: string

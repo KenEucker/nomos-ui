@@ -2,6 +2,7 @@ import type {
   CardNode,
   ColumnsNode,
   FieldsetNode,
+  FormNode,
   HeaderNode,
   RowsNode,
   LayoutNode,
@@ -33,6 +34,11 @@ export const Layouts = {
 
   fieldset: (props: FieldsetNode["props"]): FieldsetNode => ({
     type: "fieldset",
+    props,
+  }),
+
+  form: (props: FormNode["props"]): FormNode => ({
+    type: "form",
     props,
   }),
 

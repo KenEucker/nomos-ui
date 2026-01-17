@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ActionDescriptor, MethodAction, PanelModule, PanelCtx, QueryState } from "../types"
+  import type { ResourcePanelConfig } from "../runtime/resource-panel"
   import { onMount } from "svelte"
   import { buildPanelCtx, parseStateFromUrl, updateUrlWithState } from "../runtime/state"
   import { notify, toastError } from "../../lib/toast"
@@ -11,6 +12,7 @@
   export let initialNodes: any[] = []
   export let initialCommands: ActionDescriptor[] = []
   export let href: string
+  export let resourceConfig: ResourcePanelConfig | null = null
 
   let panel: PanelModule | null = null
   let data: Record<string, any> | null = initialData
@@ -25,7 +27,29 @@
 
   const buildClientCtx = (): PanelCtx => {
     const url = new URL(window.location.href)
-    return buildPanelCtx(url, {})
+    const ctx = buildPanelCtx(url, {})
+    if (resourceConfig?.mode === "list") {
+      const listConfig = resourceConfig.resource.list
+      let nextState = { ...ctx.state }
+      let changed = false
+      if (ctx.query.pageSize === undefined && listConfig?.pageSize) {
+        nextState = { ...nextState, pageSize: listConfig.pageSize }
+        changed = true
+      }
+      if (ctx.query.sort === undefined && listConfig?.defaultSort) {
+        nextState = {
+          ...nextState,
+          sort: { key: listConfig.defaultSort.key, dir: listConfig.defaultSort.direction },
+        }
+        changed = true
+      }
+      if (changed) {
+        const nextUrl = updateUrlWithState(url, nextState)
+        window.history.replaceState({}, "", nextUrl.toString())
+        return buildPanelCtx(nextUrl, {})
+      }
+    }
+    return ctx
   }
 
   const runQuery = async () => {
@@ -110,6 +134,10 @@
 
   const init = async () => {
     try {
+      if (resourceConfig) {
+        ;(window as unknown as { __RESOURCE_PANEL_CONFIG__?: ResourcePanelConfig }).__RESOURCE_PANEL_CONFIG__ =
+          resourceConfig
+      }
       const loader = panelModules[panelModuleKey]
       if (!loader) {
         throw new Error(`Unknown panel module: ${panelModuleKey}`)
