@@ -141,10 +141,13 @@
         if (node.type === "table") {
           const tableId = `${panelModuleKey}:${node.props.key}`
           uiState.ensureTable(tableId)
-          uiState.setTableSearch(tableId, state.search ?? "")
-          uiState.setTableSort(tableId, state.sort?.key ?? null, state.sort?.dir ?? "asc")
-          uiState.setTablePageSize(tableId, state.pageSize)
-          uiState.setTablePage(tableId, state.page)
+          uiState.setTableState(tableId, {
+            search: state.search ?? "",
+            sortKey: state.sort?.key ?? null,
+            sortDir: state.sort?.dir ?? "asc",
+            pageSize: state.pageSize,
+            page: state.page,
+          })
         }
         if (node.type === "rows" || node.type === "fieldset" || node.type === "card") {
           visit(node.props.nodes ?? [])

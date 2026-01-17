@@ -51,6 +51,14 @@ const createUiState = () => {
       }))
     )
 
+  const setTableState = (tableId: string, next: Partial<TableUiState>) =>
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        ...next,
+      }))
+    )
+
   const toggleTableSort = (tableId: string, key: string) =>
     update((s) =>
       updateTableState(s, tableId, (current) => {
@@ -95,6 +103,7 @@ const createUiState = () => {
     subscribe,
     ensureTable,
     setTableSearch,
+    setTableState,
     toggleTableSort,
     setTableSort,
     setTablePage,
