@@ -1,9 +1,41 @@
 import { Layouts } from "../../lib/layouts"
-import type { PanelAction, PanelModule } from "../../lib/types"
-import { listUsers, type User } from "../../services/users"
+import { apiGet } from "../../lib/api"
+import type { PanelAction, PanelModule, ResourceDefinition } from "../../lib/types"
+import type { User } from "../../services/users"
 import { usersResource } from "../resources/users.resource"
 
 const userSchema = usersResource.schema
+const listConfig = usersResource.list ?? {}
+const usersDataKey = usersResource.dataKey ?? "users"
+
+const getLabelPlural = (resource: ResourceDefinition) => {
+  if ("labels" in resource && resource.labels) return resource.labels.labelPlural
+  return resource.labelPlural ?? resource.label ?? resource.name
+}
+
+const buildUrl = (query: {
+  page: number
+  pageSize: number
+  search: string
+  sortKey: string | null
+  sortDir: "asc" | "desc"
+}) => {
+  const params = new URLSearchParams()
+  params.set("page", String(query.page))
+  params.set("pageSize", String(query.pageSize))
+  if (query.search.trim()) params.set("search", query.search.trim())
+  if (query.sortKey) params.set("sort", `${query.sortKey}:${query.sortDir}`)
+  const queryString = params.toString()
+  return queryString ? `${usersResource.endpoints.list}?${queryString}` : usersResource.endpoints.list
+}
+
+const unwrapUsers = (response: any) => {
+  const candidate =
+    response?.data?.[usersDataKey] ?? response?.[usersDataKey] ?? response?.data ?? response ?? []
+  const items = Array.isArray(candidate) ? candidate : []
+  const total = response?.meta?.total ?? response?.total ?? items.length
+  return { items, total }
+}
 
 type Data = {
   users: User[]
@@ -51,23 +83,24 @@ const usersPanel: PanelModule<Data> = {
   schema: userSchema,
 
   load: async () => {
-    const query = { page: 1, pageSize: 5, search: "", sortKey: null, sortDir: "asc" as const }
-    const result = await listUsers(query)
-    return { users: result.items, total: result.total, query, loading: false }
+    const query = {
+      page: 1,
+      pageSize: listConfig.pageSize ?? 20,
+      search: "",
+      sortKey: (listConfig.defaultSort?.key as keyof User | undefined) ?? null,
+      sortDir: listConfig.defaultSort?.direction ?? ("asc" as const),
+    }
+    const response = await apiGet<any>(buildUrl(query))
+    const { items, total } = unwrapUsers(response)
+    return { users: items, total, query, loading: false }
   },
 
   layout: (data, ctx) => [
     Layouts.table({
       id: "users",
-      title: "Directory",
+      title: getLabelPlural(usersResource),
       description: "Search, sort, and paginate through users.",
-      columns: [
-        { key: "name", label: "Name" },
-        { key: "email", label: "Email" },
-        { key: "role", label: "Role" },
-        { key: "team", label: "Team" },
-        { key: "status", label: "Status" },
-      ],
+      columns: listConfig.columns ?? [],
       rows: data.users,
       emptyMessage: "No users found.",
       rowIdKey: "id",
@@ -79,7 +112,8 @@ const usersPanel: PanelModule<Data> = {
       onQueryChange: async (query) => {
         const normalizedQuery = { ...query, sortKey: query.sortKey as keyof User | null }
         ctx?.updateData?.((current) => ({ ...current, loading: true, query: normalizedQuery }))
-        const result = await listUsers(normalizedQuery)
+        const response = await apiGet<any>(buildUrl(normalizedQuery))
+        const result = unwrapUsers(response)
         ctx?.updateData?.((current) => ({
           ...current,
           loading: false,
