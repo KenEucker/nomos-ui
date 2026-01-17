@@ -87,3 +87,45 @@ Layouts.form({
 npm install
 npm run dev
 ```
+
+## Admin Panels (Orchid-style runtime)
+
+The admin spike lives under `src/admin/` and is accessed via `/admin` and `/admin/p/:panelId`.
+Panels are single-file modules with a declarative contract:
+
+```ts
+import type { PanelModule } from "./src/admin/types"
+import { Layouts } from "./src/admin/layouts"
+
+const panel: PanelModule = {
+  id: "dashboard",
+  title: "Admin Dashboard",
+  subtitle: "System overview.",
+  query: async (ctx) => ({
+    stats: await fetch(new URL("/api/admin/overview", ctx.url)).then((res) => res.json()),
+  }),
+  commandBar: () => [
+    { type: "link", label: "Resources", href: "/admin/p/resources" },
+    { type: "method", label: "Refresh", endpoint: "/api/admin/refresh" },
+  ],
+  layout: () => [
+    Layouts.card({
+      title: "Build",
+      nodes: [Layouts.stat({ label: "Build ID", valueKey: "stats.buildId" })],
+    }),
+  ],
+}
+```
+
+### SSR/CSR lifecycle
+
+1. `src/pages/admin/p/[panelId].astro` resolves the panel, builds `ctx`, runs `query(ctx)`,
+   computes `layout(data, ctx)`, and renders the first paint.
+2. `PanelRuntime.svelte` hydrates on the client, re-runs `query()` when actions fire or
+   when the URL-driven list state changes, and re-renders the layout nodes.
+
+### Adding a new admin panel
+
+1. Create `src/admin/panels/<panel>.panel.ts` and export a `PanelModule`.
+2. Register the panel in `src/admin/panels/index.ts`.
+3. Link to it from `/admin` or other panels using a `commandBar()` link action.

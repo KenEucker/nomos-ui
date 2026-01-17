@@ -1,0 +1,34 @@
+---
+import "../../../styles/global.css"
+import { Toaster } from "../../../components/ui/sonner"
+import PanelRuntime from "../../../admin/islands/PanelRuntime.svelte"
+import { loadPanelById } from "../../../admin/panels"
+import { buildPanelCtx } from "../../../admin/runtime/state"
+
+export const prerender = false
+
+const { panelId } = Astro.params
+const panel = loadPanelById(panelId)
+const ctx = buildPanelCtx(new URL(Astro.request.url), Astro.params)
+const data = await panel.query(ctx)
+
+if (!data || typeof data !== "object" || Array.isArray(data)) {
+  throw new Error("Panel query must return a keyed data bag")
+}
+
+const nodes = panel.layout(data, ctx)
+---
+
+<div class="min-h-screen bg-background text-foreground">
+  <div class="mx-auto max-w-6xl px-6 py-10">
+    <PanelRuntime
+      panelId={panelId}
+      initialData={data}
+      initialNodes={nodes}
+      initialTitle={panel.title}
+      initialSubtitle={panel.subtitle}
+      client:load
+    />
+  </div>
+  <Toaster client:load />
+</div>
