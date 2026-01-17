@@ -6,7 +6,7 @@ import { buildPanelCtx } from "../runtime/state"
 import type { PanelModule } from "../types"
 import type { ResourcePanelConfig } from "../runtime/resource-panel"
 
-const { panel, panelModuleKey, resourceConfig } = Astro.props as {
+const { panel, panelModuleKey = "/src/admin/resource.panel.ts", resourceConfig } = Astro.props as {
   panel: PanelModule
   panelModuleKey: string
   resourceConfig: ResourcePanelConfig

@@ -6,9 +6,8 @@ import { usersResource } from "./users.resource"
 const mode = "list"
 const params = {}
 const basePath = "/admin/users"
-const panelModuleKey = "/src/pages/admin/p/resource.panel.ts"
 const panel = createResourcePanel({ resource: usersResource, mode, params, basePath })
 const resourceConfig = { resource: usersResource, mode, params, basePath }
 ---
 
-<ResourcePanelPage panel={panel} panelModuleKey={panelModuleKey} resourceConfig={resourceConfig} />
+<ResourcePanelPage panel={panel} resourceConfig={resourceConfig} />

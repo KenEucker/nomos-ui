@@ -1,6 +1,6 @@
-import type { PanelModule } from "../../../admin/types"
-import type { ResourcePanelConfig } from "../../../admin/runtime/resource-panel"
-import { createResourcePanel } from "../../../admin/runtime/resource-panel"
+import type { PanelModule } from "./types"
+import type { ResourcePanelConfig } from "./runtime/resource-panel"
+import { createResourcePanel } from "./runtime/resource-panel"
 
 const getConfig = (): ResourcePanelConfig | null => {
   if (typeof window === "undefined") {
