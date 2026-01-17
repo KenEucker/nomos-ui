@@ -94,6 +94,7 @@ export const createResourcePanel = ({
   params,
   basePath = `/admin/${resource.name}`,
 }: ResourcePanelConfig): PanelModule => {
+  const panelId = `${resource.name}-${mode}`
   const labels = getLabels(resource)
   const listKey = resolveListKey(resource)
   const singleKey = resolveSingleKey(resource)
@@ -291,7 +292,7 @@ export const createResourcePanel = ({
   }
 
   return {
-    id: `${resource.name}-${mode}`,
+    id: panelId,
     title: labels.labelPlural,
     subtitle: labels.label,
     query,
