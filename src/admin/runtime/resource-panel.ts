@@ -211,6 +211,13 @@ export const createResourcePanel = ({
             saveMethod: "PATCH",
             searchable: resource.list?.searchable ?? true,
             searchPlaceholder: resource.list?.searchPlaceholder,
+            rowActions: [
+              { id: "view", label: "View", variant: "secondary" },
+              { id: "edit", label: "Edit", variant: "secondary" },
+              { id: "delete", label: "Delete", variant: "destructive" },
+            ],
+            rowActionBasePath: basePath,
+            rowActionDeleteEndpoint: resource.endpoints.delete,
           }),
         ]),
       ]

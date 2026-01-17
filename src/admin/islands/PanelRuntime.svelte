@@ -27,7 +27,29 @@
 
   const buildClientCtx = (): PanelCtx => {
     const url = new URL(window.location.href)
-    return buildPanelCtx(url, {})
+    const ctx = buildPanelCtx(url, {})
+    if (resourceConfig?.mode === "list") {
+      const listConfig = resourceConfig.resource.list
+      let nextState = { ...ctx.state }
+      let changed = false
+      if (ctx.query.pageSize === undefined && listConfig?.pageSize) {
+        nextState = { ...nextState, pageSize: listConfig.pageSize }
+        changed = true
+      }
+      if (ctx.query.sort === undefined && listConfig?.defaultSort) {
+        nextState = {
+          ...nextState,
+          sort: { key: listConfig.defaultSort.key, dir: listConfig.defaultSort.direction },
+        }
+        changed = true
+      }
+      if (changed) {
+        const nextUrl = updateUrlWithState(url, nextState)
+        window.history.replaceState({}, "", nextUrl.toString())
+        return buildPanelCtx(nextUrl, {})
+      }
+    }
+    return ctx
   }
 
   const runQuery = async () => {

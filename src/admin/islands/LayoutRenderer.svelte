@@ -134,6 +134,33 @@
               }
             : undefined
         }
+        rowActions={node.props.rowActions}
+        onRowAction={async (action, row) => {
+          const idKey = node.props.rowIdKey ?? "id"
+          const id = row?.[idKey]
+          if (!id) return
+          const basePath = node.props.rowActionBasePath ?? ""
+          if (action.id === "view") {
+            window.location.href = `${basePath}/view?id=${encodeURIComponent(String(id))}`
+            return
+          }
+          if (action.id === "edit") {
+            window.location.href = `${basePath}/edit?id=${encodeURIComponent(String(id))}`
+            return
+          }
+          if (action.id === "delete" && node.props.rowActionDeleteEndpoint) {
+            const confirmed = window.confirm("Delete this item?")
+            if (!confirmed) return
+            const endpoint = node.props.rowActionDeleteEndpoint.includes("{id}")
+              ? node.props.rowActionDeleteEndpoint.replace("{id}", String(id))
+              : `${node.props.rowActionDeleteEndpoint}?id=${encodeURIComponent(String(id))}`
+            const response = await fetch(endpoint, { method: "DELETE" })
+            if (!response.ok) {
+              throw new Error(`Delete failed with status ${response.status}`)
+            }
+            onStateChange(state)
+          }
+        }}
         onSave={
           node.props.saveEndpoint
             ? async ({ row, patch }) => {

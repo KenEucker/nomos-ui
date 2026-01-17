@@ -39,6 +39,12 @@ export type ColumnDef = {
   hideOnMobile?: boolean
 }
 
+export type RowAction = {
+  id: string
+  label: string
+  variant?: "default" | "secondary" | "ghost" | "destructive"
+}
+
 export type FieldDef = {
   name: string
   label: string
@@ -97,6 +103,9 @@ export type TableNode = {
     saveMethod?: "POST" | "PUT" | "PATCH"
     searchable?: boolean
     searchPlaceholder?: string
+    rowActions?: RowAction[]
+    rowActionBasePath?: string
+    rowActionDeleteEndpoint?: string
   }
 }
 
