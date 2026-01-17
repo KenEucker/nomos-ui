@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { z } from "zod"
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "$ui/card"
   import { Button } from "$ui/button"
   import { Input } from "$ui/input"
   import { Textarea } from "$ui/textarea"
   import { Checkbox } from "$ui/checkbox"
   import { NativeSelect, NativeSelectOption } from "$ui/native-select"
+  import type { JSONSchema7 } from "json-schema"
   import type { FieldDef } from "../lib/types"
 
   export let id: string
   export let title: string | undefined = undefined
   export let description: string | undefined = undefined
-  export let schema: { safeParse: (values: Record<string, any>) => { success: boolean; error?: any } } | undefined = undefined
+  export let schema: JSONSchema7 | undefined = undefined
   export let fields: FieldDef[] = []
   export let submitLabel: string | undefined = undefined
   export let submitEndpoint: string
@@ -22,13 +22,32 @@
   export let data: Record<string, any> = {}
   export let onRefresh: () => void
 
-  const fallbackSchema = z.object(
-    fields.reduce<Record<string, z.ZodTypeAny>>((acc, field) => {
-      const base = field.type === "checkbox" ? z.boolean() : z.string()
-      acc[field.name] = field.required ? base : base.optional()
-      return acc
-    }, {})
-  )
+  const resolveRequiredFields = (formFields: FieldDef[], jsonSchema?: JSONSchema7) => {
+    if (Array.isArray(jsonSchema?.required)) {
+      return new Set(jsonSchema?.required)
+    }
+    return new Set(formFields.filter((field) => field.required).map((field) => field.name))
+  }
+
+  const validateRequiredFields = (formFields: FieldDef[], jsonSchema: JSONSchema7 | undefined, valuesToValidate: Record<string, any>) => {
+    const requiredFields = resolveRequiredFields(formFields, jsonSchema)
+    const nextErrors: Record<string, string> = {}
+
+    for (const field of formFields) {
+      if (!requiredFields.has(field.name)) continue
+      const value = valuesToValidate[field.name]
+      const isMissing =
+        value === undefined ||
+        value === null ||
+        (typeof value === "string" && value.trim() === "")
+
+      if (isMissing) {
+        nextErrors[field.name] = "This field is required."
+      }
+    }
+
+    return nextErrors
+  }
 
   let values: Record<string, any> = {}
   let fieldErrors: Record<string, string> = {}
@@ -38,24 +57,18 @@
   $: values = { ...values, ...(initialValuesKey ? data?.[initialValuesKey] ?? {} : {}) }
 
   const validate = () => {
-    const activeSchema = schema?.safeParse ? schema : fallbackSchema
-    const result = activeSchema.safeParse(values)
-    if (result.success) {
-      fieldErrors = {}
-      formError = null
-      return true
+    const requiredErrors = validateRequiredFields(fields, schema, values)
+
+    if (Object.keys(requiredErrors).length) {
+      fieldErrors = requiredErrors
+      formError = "Please fix the errors below."
+      return false
     }
 
-    const nextErrors: Record<string, string> = {}
-    for (const issue of result.error.issues) {
-      if (issue.path.length) {
-        nextErrors[issue.path.join(".")] = issue.message
-      }
-    }
-
-    fieldErrors = nextErrors
-    formError = "Please fix the errors below."
-    return false
+    // Placeholder for future JSON Schema validation (Ajv or server-side).
+    fieldErrors = {}
+    formError = null
+    return true
   }
 
   const updateValue = (name: string, next: any) => {
