@@ -100,6 +100,7 @@ export const createResourcePanel = ({
   const singleKey = resolveSingleKey(resource)
   const fields = resolveFields(resource)
   const columns = resolveColumns(resource)
+  const serverSideList = false
 
   const listHref = basePath
   const createHref = `${basePath}/create`
@@ -154,30 +155,34 @@ export const createResourcePanel = ({
 
   const query: PanelModule["query"] = async (ctx) => {
     if (mode === "list") {
-      const pageSize =
-        ctx.query.pageSize !== undefined
+      const pageSize = serverSideList
+        ? ctx.query.pageSize !== undefined
           ? ctx.state.pageSize
           : resource.list?.pageSize ?? ctx.state.pageSize
-      const sort =
-        ctx.state.sort ??
-        (resource.list?.defaultSort
-          ? { key: resource.list.defaultSort.key, dir: resource.list.defaultSort.direction }
-          : undefined)
+        : Math.max(resource.list?.pageSize ?? 20, 250)
+      const sort = serverSideList
+        ? ctx.state.sort ??
+          (resource.list?.defaultSort
+            ? { key: resource.list.defaultSort.key, dir: resource.list.defaultSort.direction }
+            : undefined)
+        : undefined
       const url = buildListUrl(resource.endpoints.list, {
-        page: ctx.state.page,
+        page: serverSideList ? ctx.state.page : 1,
         pageSize,
-        search: ctx.state.search,
+        search: serverSideList ? ctx.state.search : undefined,
         sort,
       })
       const response = await fetch(new URL(url, ctx.url)).then((res) => res.json())
       const { items, total } = unwrapListResponse(response, resource)
       return {
         [listKey]: items,
-        meta: {
-          total,
-          page: ctx.state.page,
-          pageSize,
-        },
+        meta: serverSideList
+          ? {
+              total,
+              page: ctx.state.page,
+              pageSize,
+            }
+          : undefined,
       }
     }
 
@@ -187,7 +192,7 @@ export const createResourcePanel = ({
       }
     }
 
-    const id = resolveId(ctx.params, ctx.query)
+    const id = resolveId(ctx.params, ctx.query) ?? normalizeId(new URL(ctx.url).searchParams.get("id"))
     if (!id) {
       throw new Error("Missing resource id")
     }
@@ -212,8 +217,8 @@ export const createResourcePanel = ({
             title: labels.labelPlural,
             description: `Showing ${labels.labelPlural.toLowerCase()} from ${resource.endpoints.list}.`,
             rowsKey: listKey,
-            paginationKey: "meta",
-            serverSide: true,
+            paginationKey: serverSideList ? "meta" : undefined,
+            serverSide: serverSideList,
             columns,
             rowIdKey: "id",
             enableEdit: false,

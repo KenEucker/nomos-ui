@@ -2,7 +2,7 @@
 
 ## Endpoints per page
 
-- **List (`/admin/users`)**: `GET /api/users` with `page`, `pageSize`, `search`, and `sort` query params.
+- **List (`/admin/users`)**: `GET /api/users` with `page=1` and a high `pageSize` to enable local search/sort/page size in the table.
 - **Create (`/admin/users/create`)**: `POST /api/users`.
 - **Edit (`/admin/users/edit?id=...`)**:
   - `GET /api/users?id={id}` to load the record.
@@ -19,7 +19,5 @@
 
 The list view sends the following query params to `/api/users`:
 
-- `page` (current page)
-- `pageSize` (current page size)
-- `search` (search string, when present)
-- `sort` (`{key}:{dir}` format, when set)
+- `page` (fixed to 1 for local table controls)
+- `pageSize` (large value to include all rows for local search/sort/page size)
