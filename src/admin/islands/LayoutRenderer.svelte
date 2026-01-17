@@ -98,6 +98,8 @@
         dataKey={node.props.rowsKey}
         rowIdKey="id"
         showSelection={false}
+        showActions={false}
+        enableEdit={false}
         page={state.page}
         pageSize={state.pageSize}
         total={node.props.paginationKey ? data[node.props.paginationKey]?.total : undefined}
