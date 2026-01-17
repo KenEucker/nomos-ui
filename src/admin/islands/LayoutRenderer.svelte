@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LayoutNode, QueryState } from "../types"
+  import type { ActionDescriptor, LayoutNode, QueryState } from "../types"
   import DataTable from "../../components/DataTable.svelte"
   import PanelHeader from "../components/PanelHeader.svelte"
 
@@ -8,6 +8,8 @@
   export let state: QueryState
   export let tableIdPrefix: string
   export let onStateChange: (state: QueryState) => void
+  export let actions: ActionDescriptor[] = []
+  export let onAction: (action: ActionDescriptor) => void
 
   const getValue = (source: Record<string, any>, path?: string) => {
     if (!path) return undefined
@@ -137,7 +139,12 @@
         </div>
       </div>
     {:else if node.type === "header"}
-      <PanelHeader title={node.props.title} subtitle={node.props.subtitle} />
+      <PanelHeader
+        title={node.props.title}
+        subtitle={node.props.subtitle}
+        {actions}
+        {onAction}
+      />
     {/if}
   {/each}
 </div>

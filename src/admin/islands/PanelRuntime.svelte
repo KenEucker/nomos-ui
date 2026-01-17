@@ -167,32 +167,6 @@
 </script>
 
 <div class="space-y-6">
-  {#if actions.length}
-    <div class="rounded-xl border bg-card p-4">
-      <div class="flex flex-wrap gap-2">
-        {#each actions as action (action.label)}
-          {#if action.type === "link"}
-            <button
-              class="rounded-md border px-4 py-2 text-sm font-medium"
-              type="button"
-              on:click={() => handleAction(action)}
-            >
-              {action.label}
-            </button>
-          {:else}
-            <button
-              class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-              type="button"
-              on:click={() => handleAction(action)}
-            >
-              {action.label}
-            </button>
-          {/if}
-        {/each}
-      </div>
-    </div>
-  {/if}
-
   {#if error}
     <div class="rounded-xl border border-destructive bg-destructive/10 p-4 text-destructive">
       {error}
@@ -207,6 +181,8 @@
       state={currentState}
       tableIdPrefix={panelModuleKey}
       onStateChange={handleStateChange}
+      {actions}
+      onAction={handleAction}
     />
   {/if}
 </div>
