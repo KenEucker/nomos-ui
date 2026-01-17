@@ -1,5 +1,5 @@
-import { createResourceDefinition } from "../../../lib/utils"
-import type { ResourceDefinition } from "../../../lib/types"
+import { createResourceDefinition } from "$lib/utils"
+import type { ResourceDefinition } from "$lib/types"
 
 export const usersResource: ResourceDefinition = createResourceDefinition({
   name: "users",
