@@ -4,7 +4,7 @@ import { createResourcePanel } from "../../../admin/runtime/resource-panel"
 import { usersResource } from "./users.resource"
 
 const mode = "view"
-const id = Astro.url.searchParams.get("id") ?? ""
+const id = new URL(Astro.request.url).searchParams.get("id") ?? ""
 const params = { id }
 const basePath = "/admin/users"
 const panelModuleKey = "/src/pages/admin/p/resource.panel.ts"
