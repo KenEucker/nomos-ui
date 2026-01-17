@@ -105,15 +105,16 @@ export const createResourcePanel = ({
   const editHref = (id: string) => `${basePath}/edit?id=${id}`
   const viewHref = (id: string) => `${basePath}/view?id=${id}`
 
-  const normalizeId = (value?: string | null) => {
-    const trimmed = value?.trim()
+  const normalizeId = (value?: string | string[] | null) => {
+    const raw = Array.isArray(value) ? value[0] : value
+    const trimmed = raw?.trim()
     return trimmed ? trimmed : undefined
   }
 
   const resolveId = (ctxParams: Record<string, string>, ctxQuery?: Record<string, string | string[]>) =>
     normalizeId(params?.id) ??
     normalizeId(ctxParams?.id) ??
-    normalizeId(ctxQuery?.id as string | undefined) ??
+    normalizeId(ctxQuery?.id) ??
     normalizeId(params?.["id"])
 
   const commandBar = (ctxParams: Record<string, string>, ctxQuery?: Record<string, string | string[]>): ActionDescriptor[] => {
