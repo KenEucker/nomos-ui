@@ -58,12 +58,3 @@ export const updateUrlWithState = (url: URL, state: QueryState): URL => {
   }
   return next
 }
-
-export const paramsFromPath = (pathname: string): Record<string, string> => {
-  const segments = pathname.split("/").filter(Boolean)
-  const panelIndex = segments.findIndex((segment) => segment === "p")
-  if (panelIndex >= 0 && segments[panelIndex + 1]) {
-    return { panelId: segments[panelIndex + 1] }
-  }
-  return {}
-}

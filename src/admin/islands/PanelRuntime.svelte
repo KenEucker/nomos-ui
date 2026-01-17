@@ -1,16 +1,14 @@
 <script lang="ts">
   import type { ActionDescriptor, MethodAction, PanelModule, PanelCtx, QueryState } from "../types"
   import { onMount } from "svelte"
-  import { loadPanelById } from "../panels"
-  import { buildPanelCtx, paramsFromPath, parseStateFromUrl, updateUrlWithState } from "../runtime/state"
+  import { buildPanelCtx, parseStateFromUrl, updateUrlWithState } from "../runtime/state"
   import { notify, toastError } from "../../lib/toast"
   import LayoutRenderer from "./LayoutRenderer.svelte"
 
-  export let panelId: string
+  export let panelModuleKey: string
   export let initialData: Record<string, any> | null = null
   export let initialNodes: any[] = []
-  export let initialTitle: string
-  export let initialSubtitle: string | undefined
+  export let href: string
 
   let panel: PanelModule | null = null
   let data: Record<string, any> | null = initialData
@@ -18,12 +16,14 @@
   let actions: ActionDescriptor[] = []
   let error: string | null = null
   let loading = false
-  let currentState: QueryState = parseStateFromUrl(new URL(typeof window === "undefined" ? "http://localhost" : window.location.href))
+  let currentState: QueryState = parseStateFromUrl(
+    new URL(typeof window === "undefined" ? href : window.location.href)
+  )
+  const panelModules = import.meta.glob("/src/pages/admin/p/**/*.panel.ts")
 
   const buildClientCtx = (): PanelCtx => {
     const url = new URL(window.location.href)
-    const params = paramsFromPath(url.pathname)
-    return buildPanelCtx(url, params)
+    return buildPanelCtx(url, {})
   }
 
   const runQuery = async () => {
@@ -97,10 +97,6 @@
     await executeMethodAction(action)
   }
 
-  const handleFormAction = async (action: MethodAction, payload: Record<string, any>) => {
-    await executeMethodAction(action, payload)
-  }
-
   const handleStateChange = (next: QueryState) => {
     const url = updateUrlWithState(new URL(window.location.href), next)
     window.history.replaceState({}, "", url.toString())
@@ -109,7 +105,16 @@
 
   const init = async () => {
     try {
-      panel = loadPanelById(panelId)
+      const loader = panelModules[panelModuleKey]
+      if (!loader) {
+        throw new Error(`Unknown panel module: ${panelModuleKey}`)
+      }
+      const mod = (await loader()) as { default?: PanelModule }
+      panel = mod.default ?? null
+      if (!panel) {
+        throw new Error(`Panel module missing default export: ${panelModuleKey}`)
+      }
+
       const ctx = buildClientCtx()
       currentState = ctx.state
       if (!data) {
@@ -131,14 +136,8 @@
 </script>
 
 <div class="space-y-6">
-  <header class="rounded-xl border bg-card p-6">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-semibold text-foreground">{initialTitle}</h1>
-        {#if initialSubtitle}
-          <p class="mt-1 text-sm text-muted-foreground">{initialSubtitle}</p>
-        {/if}
-      </div>
+  {#if actions.length}
+    <div class="rounded-xl border bg-card p-4">
       <div class="flex flex-wrap gap-2">
         {#each actions as action (action.label)}
           {#if action.type === "link"}
@@ -161,7 +160,7 @@
         {/each}
       </div>
     </div>
-  </header>
+  {/if}
 
   {#if error}
     <div class="rounded-xl border border-destructive bg-destructive/10 p-4 text-destructive">
@@ -175,7 +174,7 @@
       {nodes}
       data={data ?? {}}
       state={currentState}
-      onMethodAction={handleFormAction}
+      tableIdPrefix={panelModuleKey}
       onStateChange={handleStateChange}
     />
   {/if}

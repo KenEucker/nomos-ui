@@ -1,13 +1,11 @@
 <script lang="ts">
-  import type { ActionDescriptor, LayoutNode, QueryState } from "../types"
-  import TableNode from "./TableNode.svelte"
-  import TabsNode from "./TabsNode.svelte"
-  import FormNode from "./FormNode.svelte"
+  import type { LayoutNode, QueryState } from "../types"
+  import DataTable from "../../components/DataTable.svelte"
 
   export let nodes: LayoutNode[] = []
   export let data: Record<string, any> = {}
   export let state: QueryState
-  export let onMethodAction: (action: ActionDescriptor, payload?: Record<string, any>) => void
+  export let tableIdPrefix: string
   export let onStateChange: (state: QueryState) => void
 
   const getValue = (source: Record<string, any>, path?: string) => {
@@ -53,7 +51,7 @@
           nodes={node.props.nodes}
           {data}
           {state}
-          {onMethodAction}
+          {tableIdPrefix}
           {onStateChange}
         />
       </div>
@@ -65,20 +63,12 @@
               nodes={column.nodes}
               {data}
               {state}
-              {onMethodAction}
+              {tableIdPrefix}
               {onStateChange}
             />
           </div>
         {/each}
       </div>
-    {:else if node.type === "tabs"}
-      <TabsNode
-        tabs={node.props.tabs}
-        {data}
-        {state}
-        {onMethodAction}
-        {onStateChange}
-      />
     {:else if node.type === "card"}
       <div class="rounded-xl border bg-card p-6 shadow-sm">
         {#if node.props.title}
@@ -92,25 +82,34 @@
             nodes={node.props.nodes}
             {data}
             {state}
-            {onMethodAction}
+            {tableIdPrefix}
             {onStateChange}
           />
         </div>
       </div>
     {:else if node.type === "table"}
-      <TableNode
+      <DataTable
+        id={node.props.key}
+        tableIdPrefix={tableIdPrefix}
+        title={node.props.title ?? "Table"}
+        description={node.props.description}
         columns={node.props.columns}
         rows={data[node.props.rowsKey] ?? []}
-        meta={node.props.paginationKey ? data[node.props.paginationKey] : undefined}
-        {state}
-        {onStateChange}
-      />
-    {:else if node.type === "form"}
-      <FormNode
-        key={node.props.key}
-        fields={node.props.fields}
-        submit={node.props.submit}
-        {onMethodAction}
+        dataKey={node.props.rowsKey}
+        rowIdKey="id"
+        showSelection={false}
+        page={state.page}
+        pageSize={state.pageSize}
+        total={node.props.paginationKey ? data[node.props.paginationKey]?.total : undefined}
+        loading={false}
+        onQueryChange={(query) =>
+          onStateChange({
+            page: query.page,
+            pageSize: query.pageSize,
+            search: query.search || undefined,
+            sort: query.sortKey ? { key: query.sortKey, dir: query.sortDir } : undefined,
+          })
+        }
       />
     {:else if node.type === "fieldset"}
       <fieldset class="space-y-4 rounded-xl border bg-card p-6">
@@ -121,7 +120,7 @@
           nodes={node.props.nodes}
           {data}
           {state}
-          {onMethodAction}
+          {tableIdPrefix}
           {onStateChange}
         />
       </fieldset>

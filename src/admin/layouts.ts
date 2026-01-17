@@ -2,12 +2,10 @@ import type {
   CardNode,
   ColumnsNode,
   FieldsetNode,
-  FormNode,
   RowsNode,
   LayoutNode,
   StatNode,
   TableNode,
-  TabsNode,
   TextNode,
 } from "./types"
 
@@ -22,11 +20,6 @@ export const Layouts = {
     props: { columns },
   }),
 
-  tabs: (tabs: TabsNode["props"]["tabs"]): TabsNode => ({
-    type: "tabs",
-    props: { tabs },
-  }),
-
   card: (props: CardNode["props"]): CardNode => ({
     type: "card",
     props,
@@ -34,11 +27,6 @@ export const Layouts = {
 
   table: (props: TableNode["props"]): TableNode => ({
     type: "table",
-    props,
-  }),
-
-  form: (props: FormNode["props"]): FormNode => ({
-    type: "form",
     props,
   }),
 

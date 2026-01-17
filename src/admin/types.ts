@@ -36,13 +36,7 @@ export type ColumnDef = {
   key: string
   label: string
   sortable?: boolean
-}
-
-export type FieldDef = {
-  name: string
-  label: string
-  type: "text" | "email" | "number" | "textarea"
-  placeholder?: string
+  hideOnMobile?: boolean
 }
 
 export type RowsNode = {
@@ -59,13 +53,6 @@ export type ColumnsNode = {
   }
 }
 
-export type TabsNode = {
-  type: "tabs"
-  props: {
-    tabs: Array<{ key: string; label: string; nodes: LayoutNode[] }>
-  }
-}
-
 export type CardNode = {
   type: "card"
   props: {
@@ -79,18 +66,11 @@ export type TableNode = {
   type: "table"
   props: {
     key: string
+    title?: string
+    description?: string
     rowsKey: string
     columns: ColumnDef[]
     paginationKey?: string
-  }
-}
-
-export type FormNode = {
-  type: "form"
-  props: {
-    key: string
-    fields: FieldDef[]
-    submit: MethodAction
   }
 }
 
@@ -121,10 +101,8 @@ export type StatNode = {
 export type LayoutNode =
   | RowsNode
   | ColumnsNode
-  | TabsNode
   | CardNode
   | TableNode
-  | FormNode
   | FieldsetNode
   | TextNode
   | StatNode
