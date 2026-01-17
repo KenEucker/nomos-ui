@@ -1,12 +1,12 @@
 ---
-import "../../styles/global.css"
-import { Toaster } from "../../components/ui/sonner"
+import "../styles/global.css"
+import { Toaster } from "./ui/sonner"
 import PanelRuntime from "../islands/PanelRuntime.svelte"
 import { buildPanelCtx } from "../lib/state"
 import type { PanelModule } from "../lib/types"
 import type { ResourcePanelConfig } from "../lib/resource-panel"
 
-const { panel, panelModuleKey = "/src/admin/lib/resource.panel.ts", resourceConfig } = Astro.props as {
+const { panel, panelModuleKey = "/src/lib/resource.panel.ts", resourceConfig } = Astro.props as {
   panel: PanelModule
   panelModuleKey: string
   resourceConfig: ResourcePanelConfig

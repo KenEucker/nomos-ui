@@ -1,178 +1,50 @@
-import type { ZodSchema } from "zod"
 import type { z } from "zod"
 
+export type QueryState = {
+  page: number
+  pageSize: number
+  search?: string
+  sort?: { key: string; dir: "asc" | "desc" }
+}
+
 export type PanelCtx = {
-  // Minimal for now. Expand later (auth, params, api client, etc.)
-  request: Request
-  url: URL
+  url: string
+  params: Record<string, string>
+  query: Record<string, string | string[]>
+  state: QueryState
 }
 
-export type PanelActionVariant = "default" | "secondary" | "ghost" | "destructive"
-
-export type PanelActionContext<TData = unknown> = {
-  data: TData
-  updateData: (updater: (current: TData) => TData) => void
-  notify: (message: string, tone?: "success" | "error" | "info") => void
-  row?: Record<string, any>
-  values?: Record<string, any>
-}
-
-export type PanelAction<TData = unknown> = {
-  id: string
+export type LinkAction = {
+  type: "link"
   label: string
-  variant?: PanelActionVariant
-  run?: (ctx: PanelActionContext<TData>) => Promise<void> | void
+  href: string
+  icon?: string
 }
 
-export type PanelRenderContext<TData = unknown> = {
-  mode?: "page" | "embed" | "modal"
-  parentPanelId?: string
-  close?: () => void
-  params?: Record<string, string>
-  url?: URL | string
-  updateData?: (updater: (current: TData) => TData) => void
-  notify?: (message: string, tone?: "success" | "error" | "info") => void
+export type MethodAction = {
+  type: "method"
+  label: string
+  endpoint: string
+  method?: "POST" | "PUT" | "PATCH" | "DELETE"
+  payload?: (ctx: PanelCtx, data: Record<string, any>) => Record<string, any>
+  confirm?: { title: string; body?: string }
+  after?: "refresh" | "navigate"
+  toast?: { success?: string; error?: string }
 }
 
-export type PanelModule<TData = unknown> = {
-  id: string
-  title: string
-  subtitle?: string
-  schema?: ZodSchema
-  load?: (ctx: PanelCtx) => Promise<TData>
-  actions?: Array<PanelAction<TData>>
-  layout: (data: TData, ctx?: PanelRenderContext<TData>) => LayoutNode[]
-}
-
-export type CardNode = {
-  type: "card"
-  props: {
-    title: string
-    value: string | number
-    description?: string
-  }
-}
-
-export type CardGridNode = {
-  type: "cardGrid"
-  props: {
-    cards: Array<CardNode["props"] & { actions?: Array<PanelAction>; href?: string }>
-  }
-}
-
-export type TableNode = {
-  type: "table"
-  props: {
-    id?: string
-    title: string
-    description?: string
-    columns: ColumnDef[]
-    rows: Array<Record<string, string | number | boolean | null | undefined>>
-    emptyMessage?: string
-    dataKey?: string
-    rowIdKey?: string
-    rowActions?: Array<PanelAction>
-    page?: number
-    pageSize?: number
-    total?: number
-    loading?: boolean
-    onQueryChange?: (query: {
-      page: number
-      pageSize: number
-      search: string
-      sortKey: string | null
-      sortDir: "asc" | "desc"
-    }) => Promise<void> | void
-  }
-}
-
-export type SectionNode = {
-  type: "section"
-  props: {
-    title: string
-    description?: string
-    children: LayoutNode[]
-  }
-}
-
-export type ErrorBoxNode = {
-  type: "errorBox"
-  props: {
-    title: string
-    message: string
-    details?: string
-    retryLabel?: string
-    onRetry?: () => void | Promise<void>
-  }
-}
-
-export type TimeSeriesNode = {
-  type: "timeSeries"
-  props: {
-    title?: string
-    description?: string
-    data: Array<{ date: string; value: number }>
-  }
-}
-
-export type FormNode = {
-  type: "form"
-  props: {
-    id: string
-    title?: string
-    description?: string
-    schema: ZodSchema
-    submitLabel?: string
-    fields: Array<{
-      name: string
-      label: string
-      type: "text" | "textarea" | "email" | "password" | "relation" | "multiselect" | "lookup"
-      placeholder?: string
-      helperText?: string
-      loadOptions?: (search: string) => Promise<Array<{ value: string; label: string }>>
-      options?: Array<{ value: string; label: string }>
-      lookup?: {
-        title: string
-        description?: string
-        submitLabel?: string
-        fields: Array<{ name: string; label: string; type?: "text" | "email" }>
-        onLookup: (values: Record<string, any>) => Promise<Record<string, any>>
-        applyResult: (result: Record<string, any>) => Record<string, any>
-      }
-    }>
-    initialValues?: Record<string, any>
-    onSubmit: (values: Record<string, any>) => Promise<void> | void
-  }
-}
-
-export type TabPanelNode = {
-  type: "tabs"
-  props: {
-    id: string
-    queryParam?: string
-    tabs: Array<{
-      id: string
-      label: string
-      content: LayoutNode[]
-    }>
-  }
-}
-
-export type LayoutNode =
-  | CardNode
-  | CardGridNode
-  | TableNode
-  | SectionNode
-  | ErrorBoxNode
-  | TimeSeriesNode
-  | FormNode
-  | TabPanelNode
+export type ActionDescriptor = LinkAction | MethodAction
 
 export type ColumnDef = {
   key: string
   label: string
   sortable?: boolean
   hideOnMobile?: boolean
+}
+
+export type RowAction = {
+  id: string
+  label: string
+  variant?: "default" | "secondary" | "ghost" | "destructive"
 }
 
 export type FieldDef = {
@@ -192,6 +64,120 @@ export type FieldDef = {
   helperText?: string
   options?: Array<{ value: string; label: string }>
   required?: boolean
+}
+
+export type RowsNode = {
+  type: "rows"
+  props: {
+    nodes: LayoutNode[]
+  }
+}
+
+export type ColumnsNode = {
+  type: "columns"
+  props: {
+    columns: Array<{ span?: number; nodes: LayoutNode[] }>
+  }
+}
+
+export type CardNode = {
+  type: "card"
+  props: {
+    title?: string
+    description?: string
+    nodes: LayoutNode[]
+  }
+}
+
+export type TableNode = {
+  type: "table"
+  props: {
+    key: string
+    title?: string
+    description?: string
+    rowsKey: string
+    columns: ColumnDef[]
+    paginationKey?: string
+    serverSide?: boolean
+    rowIdKey?: string
+    enableEdit?: boolean
+    saveEndpoint?: string
+    saveMethod?: "POST" | "PUT" | "PATCH"
+    searchable?: boolean
+    searchPlaceholder?: string
+    rowActions?: RowAction[]
+    rowActionBasePath?: string
+    rowActionDeleteEndpoint?: string
+  }
+}
+
+export type FieldsetNode = {
+  type: "fieldset"
+  props: {
+    title?: string
+    nodes: LayoutNode[]
+  }
+}
+
+export type FormNode = {
+  type: "form"
+  props: {
+    id: string
+    title?: string
+    description?: string
+    schema?: unknown
+    fields: FieldDef[]
+    submitLabel?: string
+    submitEndpoint: string
+    submitMethod?: "POST" | "PUT" | "PATCH"
+    initialValuesKey?: string
+    after?: "refresh" | "navigate"
+    redirectTo?: string
+  }
+}
+
+export type TextNode = {
+  type: "text"
+  props: {
+    value?: string
+    valueKey?: string
+  }
+}
+
+export type StatNode = {
+  type: "stat"
+  props: {
+    label: string
+    valueKey: string
+  }
+}
+
+export type HeaderNode = {
+  type: "header"
+  props: {
+    title: string
+    subtitle?: string
+  }
+}
+
+export type LayoutNode =
+  | RowsNode
+  | ColumnsNode
+  | CardNode
+  | TableNode
+  | FieldsetNode
+  | TextNode
+  | StatNode
+  | HeaderNode
+  | FormNode
+
+export type PanelModule = {
+  id: string
+  title: string
+  subtitle?: string
+  query: (ctx: PanelCtx) => Promise<Record<string, any>> | Record<string, any>
+  layout: (data: Record<string, any>, ctx: PanelCtx) => LayoutNode[]
+  commandBar: (ctx: PanelCtx, data: Record<string, any>) => ActionDescriptor[]
 }
 
 export type ResourceEndpoints = {

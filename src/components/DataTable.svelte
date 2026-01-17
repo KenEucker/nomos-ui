@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte"
   import { uiState } from "../lib/state"
-  import type { PanelAction, TableNode } from "../lib/types"
+  import type { ColumnDef, RowAction } from "../lib/types"
 
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card"
   import { Input } from "./ui/input"
@@ -24,10 +24,10 @@
 
   export let title: string
   export let description: string | undefined = undefined
-  export let columns: TableNode["props"]["columns"]
-  export let rows: TableNode["props"]["rows"]
+  export let columns: ColumnDef[]
+  export let rows: Row[]
   export let emptyMessage: string | undefined = undefined
-  export let rowActions: PanelAction[] | undefined = undefined
+  export let rowActions: RowAction[] | undefined = undefined
   export let showSearch: boolean = true
   export let searchPlaceholder: string = "Search…"
   export let showSelection: boolean = true
@@ -69,7 +69,7 @@
     | undefined = undefined
 
   export let onRowAction:
-    | ((action: PanelAction, row: Row) => void | Promise<void>)
+    | ((action: RowAction, row: Row) => void | Promise<void>)
     | undefined = undefined
 
   $: tableId = `${tableIdPrefix}:${id ?? title}`

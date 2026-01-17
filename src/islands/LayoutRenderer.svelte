@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ActionDescriptor, LayoutNode, QueryState } from "../lib/types"
-  import DataTable from "../../components/DataTable.svelte"
+  import DataTable from "../components/DataTable.svelte"
   import PanelHeader from "../components/PanelHeader.svelte"
   import PanelForm from "./PanelForm.svelte"
 
