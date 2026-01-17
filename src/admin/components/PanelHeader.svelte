@@ -3,8 +3,8 @@
 
   export let title: string
   export let subtitle: string | undefined = undefined
-  export let actions: ActionDescriptor[] = []
-  export let onAction: (action: ActionDescriptor) => void
+  export let commands: ActionDescriptor[] = []
+  export let onCommand: (command: ActionDescriptor) => void
 </script>
 
 <header class="rounded-xl border bg-card p-6">
@@ -15,24 +15,24 @@
         <p class="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       {/if}
     </div>
-    {#if actions.length}
+    {#if commands.length}
       <div class="flex flex-wrap gap-2">
-        {#each actions as action (action.label)}
-          {#if action.type === "link"}
+        {#each commands as command (command.label)}
+          {#if command.type === "link"}
             <button
               class="rounded-md border px-4 py-2 text-sm font-medium"
               type="button"
-              on:click={() => onAction(action)}
+              on:click={() => onCommand(command)}
             >
-              {action.label}
+              {command.label}
             </button>
           {:else}
             <button
               class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               type="button"
-              on:click={() => onAction(action)}
+              on:click={() => onCommand(command)}
             >
-              {action.label}
+              {command.label}
             </button>
           {/if}
         {/each}

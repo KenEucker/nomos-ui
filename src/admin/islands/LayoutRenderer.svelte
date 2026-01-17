@@ -8,8 +8,8 @@
   export let state: QueryState
   export let tableIdPrefix: string
   export let onStateChange: (state: QueryState) => void
-  export let actions: ActionDescriptor[] = []
-  export let onAction: (action: ActionDescriptor) => void
+  export let commands: ActionDescriptor[] = []
+  export let onCommand: (command: ActionDescriptor) => void
 
   const getValue = (source: Record<string, any>, path?: string) => {
     if (!path) return undefined
@@ -142,8 +142,8 @@
       <PanelHeader
         title={node.props.title}
         subtitle={node.props.subtitle}
-        {actions}
-        {onAction}
+        {commands}
+        {onCommand}
       />
     {/if}
   {/each}

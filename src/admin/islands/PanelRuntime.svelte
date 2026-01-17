@@ -9,12 +9,13 @@
   export let panelModuleKey: string
   export let initialData: Record<string, any> | null = null
   export let initialNodes: any[] = []
+  export let initialCommands: ActionDescriptor[] = []
   export let href: string
 
   let panel: PanelModule | null = null
   let data: Record<string, any> | null = initialData
   let nodes = initialNodes
-  let actions: ActionDescriptor[] = []
+  let commands: ActionDescriptor[] = initialCommands
   let error: string | null = null
   let loading = false
   let currentState: QueryState = parseStateFromUrl(
@@ -40,7 +41,7 @@
       }
       data = result
       nodes = panel.layout(result, ctx)
-      actions = panel.commandBar(ctx, result)
+      commands = panel.commandBar(ctx, result)
       syncTableUi(nodes, currentState)
     } catch (err) {
       error = err instanceof Error ? err.message : "Query failed"
@@ -91,12 +92,12 @@
     }
   }
 
-  const handleAction = async (action: ActionDescriptor) => {
-    if (action.type === "link") {
-      window.location.href = action.href
+  const handleCommand = async (command: ActionDescriptor) => {
+    if (command.type === "link") {
+      window.location.href = command.href
       return
     }
-    await executeMethodAction(action)
+    await executeMethodAction(command)
   }
 
   const handleStateChange = (next: QueryState) => {
@@ -128,7 +129,7 @@
         throw new Error("Panel query must return a keyed data bag")
       }
       nodes = panel.layout(data, ctx)
-      actions = panel.commandBar(ctx, data)
+      commands = panel.commandBar(ctx, data)
       syncTableUi(nodes, currentState)
     } catch (err) {
       error = err instanceof Error ? err.message : "Panel load failed"
@@ -181,8 +182,8 @@
       state={currentState}
       tableIdPrefix={panelModuleKey}
       onStateChange={handleStateChange}
-      {actions}
-      onAction={handleAction}
+      {commands}
+      onCommand={handleCommand}
     />
   {/if}
 </div>
