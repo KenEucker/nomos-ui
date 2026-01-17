@@ -44,6 +44,7 @@ const usersPanel: PanelModule = {
   },
 
   commandBar: () => [
+    { type: "link", label: "Create User", href: `${basePath}/create` },
     {
       type: "method",
       label: "Refresh",
@@ -65,6 +66,7 @@ const usersPanel: PanelModule = {
         description: "Showing users from the /api/users endpoint.",
         rowsKey: "users",
         paginationKey: "meta",
+        enableEdit: false,
         columns: [
           { key: "name", label: "Name", sortable: true },
           { key: "email", label: "Email", sortable: true, hideOnMobile: true },
