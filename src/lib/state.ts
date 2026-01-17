@@ -51,6 +51,14 @@ const createUiState = () => {
       }))
     )
 
+  const setTableState = (tableId: string, next: Partial<TableUiState>) =>
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        ...next,
+      }))
+    )
+
   const toggleTableSort = (tableId: string, key: string) =>
     update((s) =>
       updateTableState(s, tableId, (current) => {
@@ -78,6 +86,16 @@ const createUiState = () => {
       }))
     )
 
+  const setTableSort = (tableId: string, sortKey: string | null, sortDir: SortDir) =>
+    update((s) =>
+      updateTableState(s, tableId, (current) => ({
+        ...current,
+        sortKey,
+        sortDir,
+        page: 1,
+      }))
+    )
+
   const resetTable = (tableId: string) =>
     update((s) => ({ ...s, tables: { ...s.tables, [tableId]: defaultTableState() } }))
 
@@ -85,7 +103,9 @@ const createUiState = () => {
     subscribe,
     ensureTable,
     setTableSearch,
+    setTableState,
     toggleTableSort,
+    setTableSort,
     setTablePage,
     setTablePageSize,
     resetTable,

@@ -9,7 +9,7 @@ export type User = {
   status: string
 }
 
-const USERS: User[] = Array.from({ length: 42 }).map((_, index) => {
+let USERS: User[] = Array.from({ length: 42 }).map((_, index) => {
   const id = `user-${index + 1}`
   const name = `User ${index + 1}`
   const email = `user${index + 1}@nomos.local`
@@ -79,4 +79,14 @@ export const runUsernameLookup = async (values: Record<string, any>) => {
     .replace(/\s+/g, ".")
     .replace(/[^a-z0-9.]/g, "")
   return withLatency({ username: slug || "new.user" })
+}
+
+export const updateUser = async (id: string, patch: Partial<User>) => {
+  const index = USERS.findIndex((user) => user.id === id)
+  if (index === -1) {
+    return withLatency(null)
+  }
+  const next = { ...USERS[index], ...patch }
+  USERS = [...USERS.slice(0, index), next, ...USERS.slice(index + 1)]
+  return withLatency(next)
 }
