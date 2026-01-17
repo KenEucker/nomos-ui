@@ -3,9 +3,9 @@
   import { uiState } from "../lib/state"
   import type { ColumnDef, RowAction } from "../lib/types"
 
-  import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card"
-  import { Input } from "./ui/input"
-  import { Button } from "./ui/button"
+  import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "$ui/card"
+  import { Input } from "$ui/input"
+  import { Button } from "$ui/button"
   import {
     Table,
     TableHeader,
@@ -13,9 +13,9 @@
     TableRow,
     TableHead,
     TableCell,
-  } from "./ui/table"
-  import { Checkbox } from "./ui/checkbox"
-  import * as Dialog from "./ui/dialog"
+  } from "$ui/table"
+  import { Checkbox } from "$ui/checkbox"
+  import * as Dialog from "$ui/dialog"
 
   type Row = Record<string, any>
 
