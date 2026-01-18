@@ -5,7 +5,7 @@
   import { Textarea } from "$ui/textarea"
   import { Checkbox } from "$ui/checkbox"
   import { NativeSelect, NativeSelectOption } from "$ui/native-select"
-  import MultiSelect from "svelte-multiselect"
+  import MultiSelect from "../components/svelte-multiselect"
   import type { JSONSchema7 } from "json-schema"
   import type { FieldDef } from "../lib/types"
 
