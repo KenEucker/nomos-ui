@@ -5,6 +5,7 @@ import PanelRuntime from "../islands/PanelRuntime.svelte"
 import { buildPanelCtx } from "../lib/state"
 import type { PanelModule } from "../lib/types"
 import type { ResourcePanelConfig } from "../lib/resource-panel"
+import AdminLayout from "./AdminLayout.astro"
 
 const { panel, panelModuleKey = "/src/lib/resource.panel.ts", resourceConfig } = Astro.props as {
   panel: PanelModule
@@ -27,20 +28,18 @@ const authPayload = Astro.locals.auth ?? { subject: null, capabilities: {} }
 const authJson = JSON.stringify(authPayload)
 ---
 
-<div class="min-h-screen bg-background text-foreground">
-  <div class="mx-auto max-w-6xl px-6 py-10">
-    <div class="space-y-6">
-      <PanelRuntime
-        panelModuleKey={panelModuleKey}
-        initialData={data}
-        initialNodes={nodes}
-        initialCommands={commands}
-        href={Astro.request.url}
-        resourceConfig={clientConfig}
-        client:load
-      />
-    </div>
+<AdminLayout subject={authPayload.subject}>
+  <div class="space-y-6">
+    <PanelRuntime
+      panelModuleKey={panelModuleKey}
+      initialData={data}
+      initialNodes={nodes}
+      initialCommands={commands}
+      href={Astro.request.url}
+      resourceConfig={clientConfig}
+      client:load
+    />
   </div>
   <Toaster client:load />
-</div>
+</AdminLayout>
 <script type="application/json" id="nomos-auth" set:html={authJson}></script>
