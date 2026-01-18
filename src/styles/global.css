@@ -200,6 +200,14 @@
     border-block-end: 1px solid var(--border);
   }
 
+  [data-nav-mode="settings"] .nomos-nav {
+    top: var(--nomos-header-height, 72px);
+    bottom: 0;
+    height: auto;
+    border-block-start: 0;
+    border-block-end: 0;
+  }
+
   [data-nav-mobile-dock="top"] .nomos-nav {
     top: var(--nomos-header-height, 72px);
     bottom: auto;
