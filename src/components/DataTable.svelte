@@ -2,6 +2,7 @@
   import { onMount } from "svelte"
   import { uiState } from "../lib/state"
   import type { ColumnDef, RowAction } from "../lib/types"
+  import { can, notifyDeny } from "../lib/authz/authorize.client"
 
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "$ui/card"
   import { Input } from "$ui/input"
@@ -34,6 +35,7 @@
   export let showActions: boolean = true
   export let enableEdit: boolean = true
   export let disableControlsWhileLoading: boolean = false
+  export let editIntent: string | undefined = undefined
 
   // metadata for deterministic patching
   export let dataKey: string | undefined = undefined
@@ -75,6 +77,14 @@
   $: tableId = `${tableIdPrefix}:${id ?? title}`
   $: actionColumnVisible = showActions && (enableEdit || (rowActions?.length ?? 0) > 0)
   $: columnCount = columns.length + (showSelection ? 1 : 0) + (actionColumnVisible ? 1 : 0)
+
+  const isDenied = (intent?: string) => Boolean(intent) && !can(intent)
+  const denyIfNeeded = (intent?: string) => {
+    if (!intent) return false
+    if (can(intent)) return false
+    notifyDeny(intent)
+    return true
+  }
 
   // ---- Search / Sort helpers ----
   const normalize = (v: unknown) => String(v ?? "").toLowerCase()
@@ -198,6 +208,7 @@
   }
 
   const openEdit = (row: Row, idx: number) => {
+    if (denyIfNeeded(editIntent)) return
     editIndex = pageStart + idx
     editDraft = { ...row }
     dialogOpen = true
@@ -336,10 +347,16 @@
                     <div class="flex justify-end gap-2">
                       {#if rowActions?.length}
                         {#each rowActions as action (action.id)}
+                          {@const actionDenied = isDenied(action.intent)}
                           <Button
                             size="sm"
                             variant={action.variant ?? "secondary"}
-                            onclick={() => onRowAction?.(action, row)}
+                            onclick={() => {
+                              if (denyIfNeeded(action.intent)) return
+                              onRowAction?.(action, row)
+                            }}
+                            aria-disabled={actionDenied}
+                            class={actionDenied ? "opacity-60 cursor-not-allowed" : ""}
                             disabled={disableControlsWhileLoading && loading}
                           >
                             {action.label}
@@ -347,10 +364,13 @@
                         {/each}
                       {/if}
                       {#if enableEdit}
+                        {@const editDenied = isDenied(editIntent)}
                         <Button
                           size="sm"
                           variant="secondary"
                           onclick={() => openEdit(row, rIdx)}
+                          aria-disabled={editDenied}
+                          class={editDenied ? "opacity-60 cursor-not-allowed" : ""}
                           disabled={disableControlsWhileLoading && loading}
                         >
                           Edit

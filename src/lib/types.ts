@@ -19,6 +19,7 @@ export type LinkAction = {
   label: string
   href: string
   icon?: string
+  intent?: string
 }
 
 export type MethodAction = {
@@ -30,6 +31,7 @@ export type MethodAction = {
   confirm?: { title: string; body?: string }
   after?: "refresh" | "navigate"
   toast?: { success?: string; error?: string }
+  intent?: string
 }
 
 export type ActionDescriptor = LinkAction | MethodAction
@@ -45,6 +47,7 @@ export type RowAction = {
   id: string
   label: string
   variant?: "default" | "secondary" | "ghost" | "destructive"
+  intent?: string
 }
 
 export type FieldDef = {
@@ -70,6 +73,7 @@ export type RowsNode = {
   type: "rows"
   props: {
     nodes: LayoutNode[]
+    requiredIntent?: string
   }
 }
 
@@ -77,6 +81,7 @@ export type ColumnsNode = {
   type: "columns"
   props: {
     columns: Array<{ span?: number; nodes: LayoutNode[] }>
+    requiredIntent?: string
   }
 }
 
@@ -86,6 +91,7 @@ export type CardNode = {
     title?: string
     description?: string
     nodes: LayoutNode[]
+    requiredIntent?: string
   }
 }
 
@@ -101,6 +107,7 @@ export type TableNode = {
     serverSide?: boolean
     rowIdKey?: string
     enableEdit?: boolean
+    editIntent?: string
     saveEndpoint?: string
     saveMethod?: "POST" | "PUT" | "PATCH"
     searchable?: boolean
@@ -108,6 +115,7 @@ export type TableNode = {
     rowActions?: RowAction[]
     rowActionBasePath?: string
     rowActionDeleteEndpoint?: string
+    requiredIntent?: string
   }
 }
 
@@ -116,6 +124,7 @@ export type FieldsetNode = {
   props: {
     title?: string
     nodes: LayoutNode[]
+    requiredIntent?: string
   }
 }
 
@@ -133,6 +142,7 @@ export type FormNode = {
     initialValuesKey?: string
     after?: "refresh" | "navigate"
     redirectTo?: string
+    requiredIntent?: string
   }
 }
 
@@ -141,6 +151,7 @@ export type TextNode = {
   props: {
     value?: string
     valueKey?: string
+    requiredIntent?: string
   }
 }
 
@@ -149,6 +160,7 @@ export type StatNode = {
   props: {
     label: string
     valueKey: string
+    requiredIntent?: string
   }
 }
 
@@ -157,6 +169,7 @@ export type HeaderNode = {
   props: {
     title: string
     subtitle?: string
+    requiredIntent?: string
   }
 }
 
@@ -238,6 +251,12 @@ export type ResourceDefinition = ResourceLabels & {
   // Admin resource schemas are JSON Schema; backend will later use Zod for API/db contracts.
   schema?: JSONSchema7
   requiredPermission?: string
+  intents?: {
+    read?: string
+    create?: string
+    update?: string
+    delete?: string
+  }
   dataKey?: string
   singleDataKey?: string
 }

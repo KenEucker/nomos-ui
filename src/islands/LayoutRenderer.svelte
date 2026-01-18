@@ -3,6 +3,7 @@
   import DataTable from "../components/DataTable.svelte"
   import PanelHeader from "../components/PanelHeader.svelte"
   import PanelForm from "./PanelForm.svelte"
+  import { can } from "../lib/authz/authorize.client"
 
   export let nodes: LayoutNode[] = []
   export let data: Record<string, any> = {}
@@ -45,11 +46,18 @@
         return "col-span-12"
     }
   }
+
+  const isDenied = (node: LayoutNode) =>
+    Boolean(node?.props?.requiredIntent) && !can(node.props.requiredIntent as string)
 </script>
 
 <div class="space-y-6">
   {#each nodes as node, index (index)}
-    {#if node.type === "rows"}
+    {#if isDenied(node)}
+      <div class="rounded-xl border border-dashed bg-muted/30 p-6 text-sm text-muted-foreground">
+        Access denied.
+      </div>
+    {:else if node.type === "rows"}
       <div class="space-y-6">
         <svelte:self
           nodes={node.props.nodes}
@@ -119,6 +127,7 @@
         page={serverSide ? pagination?.page : undefined}
         pageSize={serverSide ? pagination?.pageSize : undefined}
         total={serverSide ? pagination?.total : undefined}
+        editIntent={node.props.editIntent}
         onQueryChange={
           serverSide && node.props.paginationKey
             ? async (query) => {

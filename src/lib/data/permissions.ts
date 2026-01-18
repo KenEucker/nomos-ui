@@ -5,28 +5,28 @@ export type PermissionSeed = {
 }
 
 export const PERMISSIONS: PermissionSeed[] = [
-  { id: "users.read", name: "Users: Read", description: "View user records." },
-  { id: "users.write", name: "Users: Write", description: "Create and update users." },
-  { id: "roles.read", name: "Roles: Read", description: "View role assignments." },
-  { id: "roles.write", name: "Roles: Write", description: "Create and update roles." },
+  { id: "admin.access", name: "Admin: Access", description: "Access the admin console." },
+  { id: "roles.read", name: "Roles: Read", description: "View role definitions." },
+  { id: "roles.create", name: "Roles: Create", description: "Create new roles." },
+  { id: "roles.update", name: "Roles: Update", description: "Edit role details." },
+  { id: "roles.delete", name: "Roles: Delete", description: "Remove roles." },
   {
     id: "permissions.read",
     name: "Permissions: Read",
-    description: "View permission policies.",
+    description: "View available permissions.",
   },
   {
-    id: "permissions.write",
-    name: "Permissions: Write",
-    description: "Create and update permissions.",
+    id: "permissions.update",
+    name: "Permissions: Update",
+    description: "Create and edit permissions.",
   },
+  { id: "subjects.read", name: "Subjects: Read", description: "View subjects and identities." },
+  { id: "subjects.create", name: "Subjects: Create", description: "Add new subjects." },
+  { id: "subjects.update", name: "Subjects: Update", description: "Edit subject assignments." },
+  { id: "subjects.delete", name: "Subjects: Delete", description: "Remove subjects." },
   {
-    id: "projects.read",
-    name: "Projects: Read",
-    description: "Access project information.",
-  },
-  {
-    id: "projects.write",
-    name: "Projects: Write",
-    description: "Create and update projects.",
+    id: "debug.decisions.view",
+    name: "Decisions: Debug",
+    description: "View authorization decision details.",
   },
 ]

@@ -17,6 +17,13 @@ export const permissionsResource: ResourceDefinition = createResourceDefinition(
     delete: "/api/permissions?id={id}",
   },
 
+  intents: {
+    read: "permissions.read",
+    create: "permissions.update",
+    update: "permissions.update",
+    delete: "permissions.update",
+  },
+
   dataKey: "permissions",
   singleDataKey: "permission",
 

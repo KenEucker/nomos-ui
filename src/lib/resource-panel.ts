@@ -106,11 +106,18 @@ export const createResourcePanel = ({
   const createHref = `${basePath}/create`
   const editHref = (id: string) => `${basePath}/edit?id=${id}`
   const viewHref = (id: string) => `${basePath}/view?id=${id}`
+  const intents = resource.intents ?? {}
   const rowActionConfig = resource.list?.rowActions
   const rowActionCandidates: Array<RowAction | null> = [
-    rowActionConfig?.view ?? true ? { id: "view", label: "View", variant: "secondary" } : null,
-    rowActionConfig?.edit ?? true ? { id: "edit", label: "Edit", variant: "secondary" } : null,
-    rowActionConfig?.delete ?? true ? { id: "delete", label: "Delete", variant: "destructive" } : null,
+    rowActionConfig?.view ?? true
+      ? { id: "view", label: "View", variant: "secondary", intent: intents.read }
+      : null,
+    rowActionConfig?.edit ?? true
+      ? { id: "edit", label: "Edit", variant: "secondary", intent: intents.update }
+      : null,
+    rowActionConfig?.delete ?? true
+      ? { id: "delete", label: "Delete", variant: "destructive", intent: intents.delete }
+      : null,
   ]
   const rowActions = rowActionCandidates.filter((action): action is RowAction => Boolean(action))
 
@@ -130,18 +137,19 @@ export const createResourcePanel = ({
     const id = resolveId(ctxParams, ctxQuery)
     switch (mode) {
       case "list":
-        return [{ type: "link", label: `New ${labels.label}`, href: createHref }]
+        return [{ type: "link", label: `New ${labels.label}`, href: createHref, intent: intents.create }]
       case "create":
-        return [{ type: "link", label: `Back to ${labels.labelPlural}`, href: listHref }]
+        return [{ type: "link", label: `Back to ${labels.labelPlural}`, href: listHref, intent: intents.read }]
       case "edit":
         return [
-          { type: "link", label: `View ${labels.label}`, href: viewHref(id) },
-          { type: "link", label: `Back to ${labels.labelPlural}`, href: listHref },
+          { type: "link", label: `View ${labels.label}`, href: viewHref(id), intent: intents.read },
+          { type: "link", label: `Back to ${labels.labelPlural}`, href: listHref, intent: intents.read },
           {
             type: "method",
             label: `Delete ${labels.label}`,
             endpoint: interpolateEndpoint(resource.endpoints.delete, { id }),
             method: "DELETE",
+            intent: intents.delete,
             confirm: {
               title: `Delete ${labels.label}?`,
               body: `This will permanently remove the ${labels.label.toLowerCase()}.`,
@@ -152,8 +160,8 @@ export const createResourcePanel = ({
         ]
       case "view":
         return [
-          { type: "link", label: `Edit ${labels.label}`, href: editHref(id) },
-          { type: "link", label: `Back to ${labels.labelPlural}`, href: listHref },
+          { type: "link", label: `Edit ${labels.label}`, href: editHref(id), intent: intents.update },
+          { type: "link", label: `Back to ${labels.labelPlural}`, href: listHref, intent: intents.read },
         ]
       default:
         return []
@@ -218,6 +226,7 @@ export const createResourcePanel = ({
           Layouts.header({
             title: labels.labelPlural,
             subtitle: `Manage ${labels.labelPlural.toLowerCase()}.`,
+            requiredIntent: intents.read,
           }),
           Layouts.table({
             key: resource.name,
@@ -236,6 +245,7 @@ export const createResourcePanel = ({
             rowActions: rowActions.length ? rowActions : undefined,
             rowActionBasePath: basePath,
             rowActionDeleteEndpoint: resource.endpoints.delete,
+            requiredIntent: intents.read,
           }),
         ]),
       ]
@@ -244,19 +254,21 @@ export const createResourcePanel = ({
     if (mode === "view") {
       return [
         Layouts.rows([
-          Layouts.header({
-            title: `${labels.label} Details`,
-            subtitle: `Viewing ${labels.label.toLowerCase()} information.`,
-          }),
-          Layouts.card({
-            title: labels.label,
-            description: `Details from ${resource.endpoints.get}.`,
-            nodes: fields.map((field) =>
-              Layouts.stat({
-                label: field.label,
-                valueKey: `${singleKey}.${field.name}`,
-              })
-            ),
+        Layouts.header({
+          title: `${labels.label} Details`,
+          subtitle: `Viewing ${labels.label.toLowerCase()} information.`,
+          requiredIntent: intents.read,
+        }),
+        Layouts.card({
+          title: labels.label,
+          description: `Details from ${resource.endpoints.get}.`,
+          requiredIntent: intents.read,
+          nodes: fields.map((field) =>
+            Layouts.stat({
+              label: field.label,
+              valueKey: `${singleKey}.${field.name}`,
+            })
+          ),
           }),
         ]),
       ]
@@ -278,6 +290,7 @@ export const createResourcePanel = ({
             mode === "create"
               ? `Add a new ${labels.label.toLowerCase()}.`
               : `Update ${labels.label.toLowerCase()} details.`,
+          requiredIntent: mode === "create" ? intents.create : intents.update,
         }),
         Layouts.form({
           id: `${resource.name}-${mode}-form`,
@@ -294,6 +307,7 @@ export const createResourcePanel = ({
           initialValuesKey: singleKey,
           after: "navigate",
           redirectTo: mode === "create" ? listHref : viewHref(id),
+          requiredIntent: mode === "create" ? intents.create : intents.update,
         }),
       ]),
     ]
