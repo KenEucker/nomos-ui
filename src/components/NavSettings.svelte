@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Button } from "$ui/button"
+  import { buttonVariants } from "$ui/button"
   import { Switch } from "$ui/switch"
   import type { NavPreferences } from "$lib/navPreferences"
+  import { cn } from "$lib/utils.js"
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left"
   import CheckIcon from "@lucide/svelte/icons/check"
   import PanelLeftIcon from "@lucide/svelte/icons/panel-left"
@@ -92,21 +93,26 @@
 
 <div class="flex h-full flex-col">
   <div class="flex items-center justify-between border-b border-border px-3 py-2">
-    <Button variant="ghost" size="sm" on:click={onBack} aria-label="Back to navigation">
+    <button
+      type="button"
+      class={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+      on:click={onBack}
+      aria-label="Back to navigation"
+    >
       <ArrowLeftIcon class="size-4" />
       <span class="text-sm">Back</span>
-    </Button>
+    </button>
     <div class="text-sm font-semibold">Screen Settings</div>
-    <Button
-      variant="default"
-      size="sm"
+    <button
+      type="button"
+      class={cn(buttonVariants({ variant: "default", size: "sm" }))}
       on:click={onSave}
       aria-label="Save screen settings"
       title={isDirty ? "Save changes" : "No changes to save"}
     >
       <CheckIcon class="size-4" />
       <span class="text-sm">Save</span>
-    </Button>
+    </button>
   </div>
 
   {#if variant === "form"}
@@ -121,24 +127,34 @@
             <span class="text-sm">Desktop dock</span>
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              variant={draft.desktopDock === "left" ? "secondary" : "outline"}
-              size="icon-sm"
+            <button
+              type="button"
+              class={cn(
+                buttonVariants({
+                  variant: draft.desktopDock === "left" ? "secondary" : "outline",
+                  size: "icon-sm",
+                })
+              )}
               aria-label="Dock sidebar left"
               aria-pressed={draft.desktopDock === "left"}
               on:click={() => updateDraft({ desktopDock: "left" })}
             >
               <PanelLeftIcon class="size-4" />
-            </Button>
-            <Button
-              variant={draft.desktopDock === "right" ? "secondary" : "outline"}
-              size="icon-sm"
+            </button>
+            <button
+              type="button"
+              class={cn(
+                buttonVariants({
+                  variant: draft.desktopDock === "right" ? "secondary" : "outline",
+                  size: "icon-sm",
+                })
+              )}
               aria-label="Dock sidebar right"
               aria-pressed={draft.desktopDock === "right"}
               on:click={() => updateDraft({ desktopDock: "right" })}
             >
               <PanelRightIcon class="size-4" />
-            </Button>
+            </button>
           </div>
         </div>
         <div class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
@@ -147,24 +163,34 @@
             <span class="text-sm">Mobile dock</span>
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              variant={draft.mobileDock === "top" ? "secondary" : "outline"}
-              size="icon-sm"
+            <button
+              type="button"
+              class={cn(
+                buttonVariants({
+                  variant: draft.mobileDock === "top" ? "secondary" : "outline",
+                  size: "icon-sm",
+                })
+              )}
               aria-label="Dock menu to top"
               aria-pressed={draft.mobileDock === "top"}
               on:click={() => updateDraft({ mobileDock: "top" })}
             >
               <ArrowUpIcon class="size-4" />
-            </Button>
-            <Button
-              variant={draft.mobileDock === "bottom" ? "secondary" : "outline"}
-              size="icon-sm"
+            </button>
+            <button
+              type="button"
+              class={cn(
+                buttonVariants({
+                  variant: draft.mobileDock === "bottom" ? "secondary" : "outline",
+                  size: "icon-sm",
+                })
+              )}
               aria-label="Dock menu to bottom"
               aria-pressed={draft.mobileDock === "bottom"}
               on:click={() => updateDraft({ mobileDock: "bottom" })}
             >
               <ArrowDownIcon class="size-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -185,7 +211,7 @@
             <Switch
               checked={draft[toggle.key]}
               aria-label={toggle.label}
-              on:click={() => toggleValue(toggle.key)}
+              onCheckedChange={(value) => updateDraft({ [toggle.key]: value })}
             />
           </div>
         {/each}

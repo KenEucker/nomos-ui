@@ -16,6 +16,7 @@
   import KeyIcon from "@lucide/svelte/icons/key"
   import UserRoundIcon from "@lucide/svelte/icons/user-round"
   import ChevronDownIcon from "@lucide/svelte/icons/chevron-down"
+  import LogOutIcon from "@lucide/svelte/icons/log-out"
 
   type NavMode = "nav" | "settings"
 
@@ -37,6 +38,8 @@
       ],
     },
   ]
+
+  const mobileItems = navGroups.flatMap((group) => group.items)
 
   let mode: NavMode = "nav"
   let draft: NavPreferences = createDraftFromSaved(defaultNavPreferences)
@@ -112,87 +115,147 @@
   aria-label="Nomos admin navigation"
 >
   {#if mode === "nav"}
-    <div
-      class={cn(
-        "flex items-center justify-between gap-2 border-b border-border px-3 py-3",
-        $navPreferences.sidebarCollapsed && "w-full"
-      )}
-    >
-      <div
-        class={cn(
-          "flex items-center gap-2",
-          $navPreferences.sidebarCollapsed && "justify-center w-full"
-        )}
-      >
-        <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
-          N
-        </div>
-        <span class={cn("text-sm font-semibold", $navPreferences.sidebarCollapsed && "sr-only")}
-          >Nomos Admin</span
-        >
-      </div>
-      <button
-        type="button"
-        class={cn(
-          "rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground",
-          $navPreferences.sidebarCollapsed && "ml-auto"
-        )}
-        aria-label="Open screen settings"
-        on:click={openSettings}
-      >
-        <SettingsIcon class="size-4" />
-      </button>
-    </div>
-
-    <div class="flex-1 space-y-4 overflow-y-auto px-2 py-4">
-      {#each navGroups as group}
-        {@const collapsed = $navPreferences.collapsedGroups[group.id] ?? false}
-        <div class="space-y-2">
-          {#if $navPreferences.showGroupHeadings && !$navPreferences.sidebarCollapsed}
+    {#if isMobile}
+      <div class="flex-1">
+        <ul class="flex items-center justify-around gap-2 px-2 py-2">
+          {#each mobileItems as item}
+            <li class="flex-1">
+              <a
+                href={item.href}
+                class={cn(
+                  "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition",
+                  currentPath.startsWith(item.href)
+                    ? "bg-accent text-foreground"
+                    : "hover:bg-accent hover:text-foreground"
+                )}
+                aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
+                aria-label={item.label}
+              >
+                <svelte:component this={item.icon} class="size-4" />
+                <span class="sr-only">{item.label}</span>
+              </a>
+            </li>
+          {/each}
+          <li class="flex-1">
             <button
               type="button"
-              class="flex w-full items-center justify-between gap-2 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              aria-expanded={!collapsed}
-              on:click={() => toggleGroup(group.id)}
+              class="flex w-full items-center justify-center rounded-md px-3 py-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label="Open screen settings"
+              on:click={openSettings}
             >
-              <span>{group.label}</span>
-              <ChevronDownIcon class={cn("size-3 transition-transform", collapsed && "-rotate-90")}
-              />
+              <SettingsIcon class="size-4" />
             </button>
-          {/if}
-          {#if !collapsed}
-            <ul class="space-y-1">
-              {#each group.items as item}
-                <li>
-                  <a
-                    href={item.href}
-                    class={cn(
-                      "flex items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground transition",
-                      $navPreferences.denseMode ? "py-1.5" : "py-2",
-                      currentPath.startsWith(item.href)
-                        ? "bg-accent text-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    )}
-                    aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
-                    aria-label={item.label}
-                    title={
-                      $navPreferences.sidebarCollapsed && $navPreferences.enableTooltips
-                        ? item.label
-                        : undefined
-                    }
-                  >
-                    <svelte:component this={item.icon} class="size-4" />
-                    <span class={$navPreferences.sidebarCollapsed ? "sr-only" : "truncate"}
-                      >{item.label}</span
-                    >
-                  </a>
-                </li>
-              {/each}
-            </ul>
-          {/if}
+          </li>
+          <li class="flex-1">
+            <a
+              href="/admin/logout"
+              class="flex items-center justify-center rounded-md px-3 py-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label="Log out"
+            >
+              <LogOutIcon class="size-4" />
+              <span class="sr-only">Log out</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    {:else}
+      <div
+        class={cn(
+          "flex items-center justify-between gap-2 border-b border-border px-3 py-3",
+          $navPreferences.sidebarCollapsed && "w-full"
+        )}
+      >
+        <div
+          class={cn(
+            "flex items-center gap-2",
+            $navPreferences.sidebarCollapsed && "justify-center w-full"
+          )}
+        >
+          <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
+            N
+          </div>
+          <span class={cn("text-sm font-semibold", $navPreferences.sidebarCollapsed && "sr-only")}
+            >Nomos Admin</span
+          >
         </div>
-      {/each}
-    </div>
+        <button
+          type="button"
+          class={cn(
+            "rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground",
+            $navPreferences.sidebarCollapsed && "ml-auto"
+          )}
+          aria-label="Open screen settings"
+          on:click={openSettings}
+        >
+          <SettingsIcon class="size-4" />
+        </button>
+      </div>
+
+      <div class="flex-1 space-y-4 overflow-y-auto px-2 py-4">
+        {#each navGroups as group}
+          {@const collapsed = $navPreferences.collapsedGroups[group.id] ?? false}
+          <div class="space-y-2">
+            {#if $navPreferences.showGroupHeadings && !$navPreferences.sidebarCollapsed}
+              <button
+                type="button"
+                class="flex w-full items-center justify-between gap-2 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                aria-expanded={!collapsed}
+                on:click={() => toggleGroup(group.id)}
+              >
+                <span>{group.label}</span>
+                <ChevronDownIcon
+                  class={cn("size-3 transition-transform", collapsed && "-rotate-90")}
+                />
+              </button>
+            {/if}
+            {#if !collapsed}
+              <ul class="space-y-1">
+                {#each group.items as item}
+                  <li>
+                    <a
+                      href={item.href}
+                      class={cn(
+                        "flex items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground transition",
+                        $navPreferences.denseMode ? "py-1.5" : "py-2",
+                        currentPath.startsWith(item.href)
+                          ? "bg-accent text-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      )}
+                      aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
+                      aria-label={item.label}
+                      title={
+                        $navPreferences.sidebarCollapsed && $navPreferences.enableTooltips
+                          ? item.label
+                          : undefined
+                      }
+                    >
+                      <svelte:component this={item.icon} class="size-4" />
+                      <span class={$navPreferences.sidebarCollapsed ? "sr-only" : "truncate"}
+                        >{item.label}</span
+                      >
+                    </a>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
+        {/each}
+      </div>
+
+      <div class="border-t border-border px-3 py-3">
+        <a
+          href="/admin/logout"
+          class={cn(
+            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground",
+            $navPreferences.sidebarCollapsed && "justify-center"
+          )}
+          aria-label="Log out"
+        >
+          <LogOutIcon class="size-4" />
+          <span class={$navPreferences.sidebarCollapsed ? "sr-only" : undefined}>Log out</span>
+        </a>
+      </div>
+    {/if}
   {:else}
     <NavSettings
       variant={variant}
