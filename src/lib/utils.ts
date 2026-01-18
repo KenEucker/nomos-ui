@@ -77,6 +77,7 @@ export const createResourceDefinition = (input: ResourceDefinitionPartial): Reso
 
     schema: input.schema,
     requiredPermission: input.requiredPermission,
+    intents: input.intents,
     dataKey: input.dataKey,
     singleDataKey: input.singleDataKey,
   }

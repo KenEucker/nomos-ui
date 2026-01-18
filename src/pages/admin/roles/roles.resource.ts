@@ -23,6 +23,13 @@ export const rolesResource: ResourceDefinition = createResourceDefinition({
     delete: "/api/roles?id={id}",
   },
 
+  intents: {
+    read: "roles.read",
+    create: "roles.create",
+    update: "roles.update",
+    delete: "roles.delete",
+  },
+
   dataKey: "roles",
   singleDataKey: "role",
 

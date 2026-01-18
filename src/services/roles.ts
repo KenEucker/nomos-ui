@@ -87,3 +87,11 @@ export const deleteRole = async (id: string) => {
   ROLES_STORE = ROLES_STORE.filter((entry) => entry.id !== id)
   return withLatency(existing)
 }
+
+export const assignPermissionToRole = async (id: string, permissionId: string) => {
+  const role = ROLES_STORE.find((entry) => entry.id === id) ?? null
+  if (!role) return withLatency(null)
+  const permissions = new Set(role.permissions)
+  permissions.add(permissionId)
+  return updateRole(id, { permissions: Array.from(permissions) })
+}
