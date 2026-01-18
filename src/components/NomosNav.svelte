@@ -10,6 +10,15 @@
     savePreferences,
     type NavPreferences,
   } from "$lib/navPreferences"
+  import {
+    applyThemePreference,
+    effectiveTheme,
+    loadThemePreference,
+    persistThemePreference,
+    themePreference,
+    watchSystemTheme,
+    type ThemePreference,
+  } from "$lib/theme"
   import SettingsIcon from "@lucide/svelte/icons/settings"
   import UsersIcon from "@lucide/svelte/icons/users"
   import ShieldIcon from "@lucide/svelte/icons/shield"
@@ -17,6 +26,8 @@
   import UserRoundIcon from "@lucide/svelte/icons/user-round"
   import ChevronDownIcon from "@lucide/svelte/icons/chevron-down"
   import LogOutIcon from "@lucide/svelte/icons/log-out"
+  import MoonIcon from "@lucide/svelte/icons/moon"
+  import SunIcon from "@lucide/svelte/icons/sun"
 
   type NavMode = "nav" | "settings"
 
@@ -43,6 +54,8 @@
 
   let mode: NavMode = "nav"
   let draft: NavPreferences = createDraftFromSaved(defaultNavPreferences)
+  let themeDraft: ThemePreference = "system"
+  let savedTheme: ThemePreference = "system"
   let currentPath = ""
   let isMobile = false
   let variant: "form" | "quick" = "form"
@@ -62,21 +75,36 @@
 
   const openSettings = () => {
     draft = createDraftFromSaved($navPreferences)
+    savedTheme = $themePreference
+    themeDraft = savedTheme
     mode = "settings"
   }
 
   const handleSave = () => {
     savePreferences(draft)
+    persistThemePreference(themeDraft)
     mode = "nav"
   }
 
   const handleBack = () => {
     draft = createDraftFromSaved($navPreferences)
+    themeDraft = savedTheme
+    applyThemePreference(savedTheme)
     mode = "nav"
   }
 
   const handleDraftChange = (next: NavPreferences) => {
     draft = next
+  }
+
+  const handleThemeDraftChange = (next: ThemePreference) => {
+    themeDraft = next
+    applyThemePreference(next)
+  }
+
+  const toggleTheme = () => {
+    const next = $effectiveTheme === "dark" ? "light" : "dark"
+    persistThemePreference(next)
   }
 
   const toggleGroup = (id: string) => {
@@ -92,15 +120,19 @@
 
   onMount(() => {
     loadPreferences()
+    const initialTheme = loadThemePreference()
+    themeDraft = initialTheme
     currentPath = window.location.pathname
     const media = window.matchMedia("(max-width: 768px)")
     const update = () => {
       isMobile = media.matches
     }
     update()
+    const stopThemeWatch = watchSystemTheme()
     media.addEventListener("change", update)
     return () => {
       media.removeEventListener("change", update)
+      stopThemeWatch()
     }
   })
 
@@ -148,6 +180,21 @@
               on:click={openSettings}
             >
               <SettingsIcon class="size-4" />
+            </button>
+          </li>
+          <li class="flex-1">
+            <button
+              type="button"
+              class="flex w-full items-center justify-center rounded-md px-3 py-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label={`Switch to ${$effectiveTheme === "dark" ? "light" : "dark"} mode`}
+              aria-pressed={$effectiveTheme === "dark"}
+              on:click={toggleTheme}
+            >
+              {#if $effectiveTheme === "dark"}
+                <MoonIcon class="size-4" />
+              {:else}
+                <SunIcon class="size-4" />
+              {/if}
             </button>
           </li>
           <li class="flex-1">
@@ -248,17 +295,40 @@
       </div>
 
       <div class="border-t border-border px-3 py-3">
-        <a
-          href="/admin/logout"
+        <div
           class={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground",
-            $navPreferences.sidebarCollapsed && "justify-center"
+            "flex items-center gap-2",
+            $navPreferences.sidebarCollapsed ? "justify-center" : "justify-between"
           )}
-          aria-label="Log out"
         >
-          <LogOutIcon class="size-4" />
-          <span class={$navPreferences.sidebarCollapsed ? "sr-only" : undefined}>Log out</span>
-        </a>
+          <a
+            href="/admin/logout"
+            class={cn(
+              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground",
+              $navPreferences.sidebarCollapsed && "justify-center"
+            )}
+            aria-label="Log out"
+          >
+            <LogOutIcon class="size-4" />
+            <span class={$navPreferences.sidebarCollapsed ? "sr-only" : undefined}>Log out</span>
+          </a>
+          <button
+            type="button"
+            class={cn(
+              "rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground",
+              $navPreferences.sidebarCollapsed && "ml-0"
+            )}
+            aria-label={`Switch to ${$effectiveTheme === "dark" ? "light" : "dark"} mode`}
+            aria-pressed={$effectiveTheme === "dark"}
+            on:click={toggleTheme}
+          >
+            {#if $effectiveTheme === "dark"}
+              <MoonIcon class="size-4" />
+            {:else}
+              <SunIcon class="size-4" />
+            {/if}
+          </button>
+        </div>
       </div>
     {/if}
   {:else}
@@ -266,7 +336,10 @@
       variant={variant}
       saved={$navPreferences}
       draft={draft}
+      savedTheme={savedTheme}
+      draftTheme={themeDraft}
       onChange={handleDraftChange}
+      onThemeChange={handleThemeDraftChange}
       onSave={handleSave}
       onBack={handleBack}
     />
