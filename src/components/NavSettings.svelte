@@ -2,6 +2,7 @@
   import { buttonVariants } from "$ui/button"
   import { Switch } from "$ui/switch"
   import type { NavPreferences } from "$lib/navPreferences"
+  import { getEffectiveTheme, type ThemePreference } from "$lib/theme"
   import { cn } from "$lib/utils.js"
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left"
   import CheckIcon from "@lucide/svelte/icons/check"
@@ -15,11 +16,16 @@
   import MonitorIcon from "@lucide/svelte/icons/monitor"
   import SmartphoneIcon from "@lucide/svelte/icons/smartphone"
   import SparklesIcon from "@lucide/svelte/icons/sparkles"
+  import SunIcon from "@lucide/svelte/icons/sun"
+  import MoonIcon from "@lucide/svelte/icons/moon"
 
   export let variant: "form" | "quick"
   export let saved: NavPreferences
   export let draft: NavPreferences
+  export let savedTheme: ThemePreference
+  export let draftTheme: ThemePreference
   export let onChange: (draft: NavPreferences) => void
+  export let onThemeChange: (draft: ThemePreference) => void
   export let onSave: () => void
   export let onBack: () => void
 
@@ -88,7 +94,16 @@
     })
   }
 
-  $: isDirty = JSON.stringify(saved) !== JSON.stringify(draft)
+  const toggleTheme = () => {
+    const next = getEffectiveTheme(draftTheme) === "dark" ? "light" : "dark"
+    onThemeChange(next)
+  }
+
+  let isDirty = false
+  let themeIsDark = false
+
+  $: isDirty = JSON.stringify(saved) !== JSON.stringify(draft) || savedTheme !== draftTheme
+  $: themeIsDark = getEffectiveTheme(draftTheme) === "dark"
 </script>
 
 <div class="flex h-full flex-col">
@@ -117,6 +132,30 @@
 
   {#if variant === "form"}
     <div class="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+      <div class="space-y-3">
+        <div class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Appearance
+        </div>
+        <div class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+          <div class="flex items-start gap-3">
+            {#if themeIsDark}
+              <MoonIcon class="mt-0.5 size-4 text-muted-foreground" />
+            {:else}
+              <SunIcon class="mt-0.5 size-4 text-muted-foreground" />
+            {/if}
+            <div>
+              <div class="text-sm font-medium">Theme</div>
+              <div class="text-xs text-muted-foreground">Toggle light or dark mode.</div>
+            </div>
+          </div>
+          <Switch
+            checked={themeIsDark}
+            aria-label="Theme"
+            onCheckedChange={(value) => onThemeChange(value ? "dark" : "light")}
+          />
+        </div>
+      </div>
+
       <div class="space-y-3">
         <div class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Docking
@@ -237,6 +276,24 @@
             <PanelRightIcon class="size-5" />
           {/if}
           <span class="hidden text-[10px] text-muted-foreground sm:block">Desktop dock</span>
+        </button>
+        <button
+          type="button"
+          class={
+            themeIsDark
+              ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
+              : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
+          }
+          aria-label="Toggle theme"
+          aria-pressed={themeIsDark}
+          on:click={toggleTheme}
+        >
+          {#if themeIsDark}
+            <MoonIcon class="size-5" />
+          {:else}
+            <SunIcon class="size-5" />
+          {/if}
+          <span class="hidden text-[10px] text-muted-foreground sm:block">Theme</span>
         </button>
         <button
           type="button"
