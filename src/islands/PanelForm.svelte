@@ -158,6 +158,28 @@
               <NativeSelectOption value={option.value}>{option.label}</NativeSelectOption>
             {/each}
           </NativeSelect>
+        {:else if field.type === "multiselect"}
+          <NativeSelect
+            id={`${id}-${field.name}`}
+            multiple
+            onchange={(event) => {
+              const selected = Array.from((event.currentTarget as HTMLSelectElement).selectedOptions).map(
+                (option) => option.value
+              )
+              updateValue(field.name, selected)
+            }}
+          >
+            {#each field.options ?? [] as option (option.value)}
+              <NativeSelectOption
+                value={option.value}
+                selected={
+                  Array.isArray(values[field.name]) ? values[field.name].includes(option.value) : false
+                }
+              >
+                {option.label}
+              </NativeSelectOption>
+            {/each}
+          </NativeSelect>
         {:else}
           <Input
             id={`${id}-${field.name}`}

@@ -1,0 +1,13 @@
+---
+import ResourcePanelPage from "../../../components/ResourcePanelPage.astro"
+import { createResourcePanel } from "$lib/resource-panel"
+import { permissionsResource } from "./permissions.resource"
+
+const mode = "create"
+const params = {}
+const basePath = "/admin/permissions"
+const panel = createResourcePanel({ resource: permissionsResource, mode, params, basePath })
+const resourceConfig = { resource: permissionsResource, mode, params, basePath }
+---
+
+<ResourcePanelPage panel={panel} resourceConfig={resourceConfig} />
