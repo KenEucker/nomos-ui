@@ -126,7 +126,7 @@
   display: grid;
   grid-template-areas: "nav main";
   grid-template-columns: var(--nomos-nav-width) minmax(0, 1fr);
-  min-height: 0;
+  min-height: calc(100svh - var(--nomos-header-height, 72px));
 }
 
 .admin-shell-nav {
@@ -140,6 +140,9 @@
 }
 
 .nomos-nav {
+  position: sticky;
+  top: var(--nomos-header-height, 72px);
+  height: calc(100svh - var(--nomos-header-height, 72px));
   border-inline-end: 1px solid var(--border);
 }
 
@@ -155,6 +158,10 @@
 
 [data-nav-collapsed="true"] {
   --nomos-nav-width: var(--nomos-nav-width-collapsed);
+}
+
+[data-nav-mode="settings"] {
+  --nomos-nav-width: 240px;
 }
 
 [data-nav-reduce-motion="true"] .nomos-nav * {
@@ -175,6 +182,10 @@
   }
 
   .nomos-nav {
+    position: sticky;
+    top: auto;
+    bottom: 0;
+    height: auto;
     border-inline: 0;
     border-block-end: 1px solid var(--border);
   }

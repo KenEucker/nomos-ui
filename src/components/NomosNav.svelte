@@ -57,6 +57,7 @@
     root.dataset.navShowGroups = prefs.showGroupHeadings ? "true" : "false"
     root.dataset.navTooltips = prefs.enableTooltips ? "true" : "false"
     root.dataset.navReduceMotion = prefs.reduceMotion ? "true" : "false"
+    root.dataset.navMode = mode
   }
 
   const openSettings = () => {
@@ -103,17 +104,20 @@
     }
   })
 
-  $: updateDocumentPrefs($navPreferences)
-  $: variant = isMobile || $navPreferences.sidebarCollapsed ? "quick" : "form"
+  let appliedPrefs: NavPreferences = defaultNavPreferences
+
+  $: appliedPrefs = mode === "settings" ? draft : $navPreferences
+  $: updateDocumentPrefs(appliedPrefs)
+  $: variant = isMobile || appliedPrefs.sidebarCollapsed ? "quick" : "form"
 </script>
 
-<nav
-  class={cn(
-    "nomos-nav bg-card text-card-foreground flex h-full min-h-0 flex-col",
-    $navPreferences.sidebarCollapsed ? "items-center" : "items-stretch"
-  )}
-  aria-label="Nomos admin navigation"
->
+  <nav
+    class={cn(
+      "nomos-nav bg-card text-card-foreground flex h-full min-h-0 flex-col",
+      $navPreferences.sidebarCollapsed && mode === "nav" ? "items-center" : "items-stretch"
+    )}
+    aria-label="Nomos admin navigation"
+  >
   {#if mode === "nav"}
     {#if isMobile}
       <div class="flex-1">
@@ -159,18 +163,18 @@
         </ul>
       </div>
     {:else}
-      <div
-        class={cn(
-          "flex items-center justify-between gap-2 border-b border-border px-3 py-3",
-          $navPreferences.sidebarCollapsed && "w-full"
-        )}
-      >
         <div
           class={cn(
-            "flex items-center gap-2",
-            $navPreferences.sidebarCollapsed && "justify-center w-full"
+            "flex items-center justify-between gap-2 border-b border-border px-3 py-3",
+            $navPreferences.sidebarCollapsed && "w-full"
           )}
         >
+          <div
+            class={cn(
+              "flex items-center gap-2",
+              $navPreferences.sidebarCollapsed && "justify-center w-full"
+            )}
+          >
           <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
             N
           </div>
@@ -191,9 +195,10 @@
         </button>
       </div>
 
-      <div class="flex-1 space-y-4 overflow-y-auto px-2 py-4">
-        {#each navGroups as group}
-          {@const collapsed = $navPreferences.collapsedGroups[group.id] ?? false}
+        <div class="flex-1 space-y-4 overflow-y-auto px-2 py-4">
+          {#each navGroups as group}
+            {@const collapsed =
+              $navPreferences.sidebarCollapsed ? false : $navPreferences.collapsedGroups[group.id] ?? false}
           <div class="space-y-2">
             {#if $navPreferences.showGroupHeadings && !$navPreferences.sidebarCollapsed}
               <button

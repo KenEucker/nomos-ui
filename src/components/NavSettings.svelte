@@ -219,13 +219,13 @@
     </div>
   {:else}
     <div class="flex-1 overflow-y-auto px-3 py-4">
-      <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 sm:grid sm:grid-cols-2 sm:gap-3">
         <button
           type="button"
           class={
             draft.desktopDock === "left"
-              ? "flex flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium"
-              : "flex flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm"
+              ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
+              : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
           }
           aria-label={`Desktop dock ${draft.desktopDock === "left" ? "left" : "right"}`}
           aria-pressed={draft.desktopDock === "left"}
@@ -236,14 +236,14 @@
           {:else}
             <PanelRightIcon class="size-5" />
           {/if}
-          <span class="text-xs text-muted-foreground">Desktop dock</span>
+          <span class="hidden text-[10px] text-muted-foreground sm:block">Desktop dock</span>
         </button>
         <button
           type="button"
           class={
             draft.mobileDock === "top"
-              ? "flex flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium"
-              : "flex flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm"
+              ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
+              : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
           }
           aria-label={`Mobile dock ${draft.mobileDock === "top" ? "top" : "bottom"}`}
           aria-pressed={draft.mobileDock === "top"}
@@ -254,22 +254,22 @@
           {:else}
             <ArrowDownIcon class="size-5" />
           {/if}
-          <span class="text-xs text-muted-foreground">Mobile dock</span>
+          <span class="hidden text-[10px] text-muted-foreground sm:block">Mobile dock</span>
         </button>
         {#each toggles as toggle}
           <button
             type="button"
             class={
               draft[toggle.key]
-                ? "flex flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium"
-                : "flex flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm"
+                ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
+                : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
             }
             aria-label={toggle.label}
             aria-pressed={draft[toggle.key]}
             on:click={() => toggleValue(toggle.key)}
           >
             <svelte:component this={toggle.icon} class="size-5" />
-            <span class="text-xs text-muted-foreground">{toggle.label}</span>
+            <span class="hidden text-[10px] text-muted-foreground sm:block">{toggle.label}</span>
           </button>
         {/each}
       </div>
