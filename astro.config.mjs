@@ -12,10 +12,5 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
-    resolve: {
-      alias: {
-        'svelte-multiselect': '/src/lib/svelte-multiselect/index.ts'
-      }
-    }
   }
 });
