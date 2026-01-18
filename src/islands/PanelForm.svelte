@@ -5,6 +5,7 @@
   import { Textarea } from "$ui/textarea"
   import { Checkbox } from "$ui/checkbox"
   import { NativeSelect, NativeSelectOption } from "$ui/native-select"
+  import MultiSelect from "../components/svelte-multiselect"
   import type { JSONSchema7 } from "json-schema"
   import type { FieldDef } from "../lib/types"
 
@@ -158,6 +159,22 @@
               <NativeSelectOption value={option.value}>{option.label}</NativeSelectOption>
             {/each}
           </NativeSelect>
+        {:else if field.type === "multiselect"}
+          {@const options = field.options ?? []}
+          {@const selectedItems = options.filter((option) =>
+            Array.isArray(values[field.name]) ? values[field.name].includes(option.value) : false
+          )}
+          <MultiSelect
+            items={options}
+            selected={selectedItems}
+            placeholder={`Select ${field.label}`}
+            invalid={Boolean(fieldErrors[field.name])}
+            on:change={(event) =>
+              updateValue(
+                field.name,
+                event.detail.selected.map((item) => item.value)
+              )}
+          />
         {:else}
           <Input
             id={`${id}-${field.name}`}
