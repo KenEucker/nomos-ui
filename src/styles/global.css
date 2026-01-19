@@ -203,7 +203,7 @@
 
   [data-nav-mobile-dock="top"] .nomos-nav {
     position: sticky;
-    top: 0;
+    top: var(--nomos-header-offset, var(--nomos-header-height, 72px));
     bottom: auto;
     height: auto;
     border-block-end: 1px solid var(--border);
@@ -211,6 +211,9 @@
   }
 
   [data-nav-mobile-dock="bottom"] .nomos-nav {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
     border-block-start: 1px solid var(--border);
     border-block-end: 0;
   }

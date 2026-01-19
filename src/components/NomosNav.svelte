@@ -66,6 +66,7 @@
   let variant: "form" | "quick" = "form"
   let expandedGroups: string[] = []
   let isRightDock = false
+  let useCompactMobileNav = false
 
   const updateDocumentPrefs = (prefs: NavPreferences) => {
     if (typeof document === "undefined") return
@@ -156,7 +157,8 @@
       return !(appliedPrefs.collapsedGroups[group.id] ?? false)
     })
     .map((group) => group.id)
-  $: isRightDock = appliedPrefs.desktopDock === "right"
+  $: useCompactMobileNav = isMobile && appliedPrefs.mobileDock === "bottom"
+  $: isRightDock = appliedPrefs.desktopDock === "right" && !isMobile
 </script>
 
   <nav
@@ -167,7 +169,7 @@
     aria-label="Nomos admin navigation"
   >
   {#if mode === "nav"}
-    {#if isMobile}
+    {#if useCompactMobileNav}
       <div class="flex-1">
         <ul class="flex items-center justify-around gap-2 px-2 py-2">
           {#each mobileItems as item}
