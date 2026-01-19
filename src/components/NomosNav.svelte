@@ -24,10 +24,15 @@
   import ShieldIcon from "@lucide/svelte/icons/shield"
   import KeyIcon from "@lucide/svelte/icons/key"
   import UserRoundIcon from "@lucide/svelte/icons/user-round"
-  import ChevronDownIcon from "@lucide/svelte/icons/chevron-down"
   import LogOutIcon from "@lucide/svelte/icons/log-out"
   import MoonIcon from "@lucide/svelte/icons/moon"
   import SunIcon from "@lucide/svelte/icons/sun"
+  import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+  } from "../shadcn-svelte/accordion"
 
   type NavMode = "nav" | "settings"
 
@@ -59,6 +64,8 @@
   let currentPath = ""
   let isMobile = false
   let variant: "form" | "quick" = "form"
+  let expandedGroups: string[] = []
+  let isRightDock = false
 
   const updateDocumentPrefs = (prefs: NavPreferences) => {
     if (typeof document === "undefined") return
@@ -107,14 +114,16 @@
     persistThemePreference(next)
   }
 
-  const toggleGroup = (id: string) => {
-    const collapsed = $navPreferences.collapsedGroups[id] ?? false
+  const handleGroupChange = (nextValue: string[] | string) => {
+    if ($navPreferences.sidebarCollapsed || !$navPreferences.showGroupHeadings) return
+    const nextValues = Array.isArray(nextValue) ? nextValue : [nextValue]
+    const collapsedGroups = navGroups.reduce<Record<string, boolean>>((acc, group) => {
+      acc[group.id] = !nextValues.includes(group.id)
+      return acc
+    }, {})
     savePreferences({
       ...$navPreferences,
-      collapsedGroups: {
-        ...$navPreferences.collapsedGroups,
-        [id]: !collapsed,
-      },
+      collapsedGroups,
     })
   }
 
@@ -141,6 +150,13 @@
   $: appliedPrefs = mode === "settings" ? draft : $navPreferences
   $: updateDocumentPrefs(appliedPrefs)
   $: variant = isMobile || appliedPrefs.sidebarCollapsed ? "quick" : "form"
+  $: expandedGroups = navGroups
+    .filter((group) => {
+      if (appliedPrefs.sidebarCollapsed || !appliedPrefs.showGroupHeadings) return true
+      return !(appliedPrefs.collapsedGroups[group.id] ?? false)
+    })
+    .map((group) => group.id)
+  $: isRightDock = appliedPrefs.desktopDock === "right"
 </script>
 
   <nav
@@ -213,7 +229,8 @@
         <div
           class={cn(
             "flex items-center justify-between gap-2 border-b border-border px-3 py-3",
-            $navPreferences.sidebarCollapsed && "w-full"
+            $navPreferences.sidebarCollapsed && "w-full",
+            isRightDock && "flex-row-reverse"
           )}
         >
           <div
@@ -242,63 +259,63 @@
         </button>
       </div>
 
-        <div class="flex-1 space-y-4 overflow-y-auto px-2 py-4">
-          {#each navGroups as group}
-            {@const collapsed =
-              $navPreferences.sidebarCollapsed ? false : $navPreferences.collapsedGroups[group.id] ?? false}
-          <div class="space-y-2">
-            {#if $navPreferences.showGroupHeadings && !$navPreferences.sidebarCollapsed}
-              <button
-                type="button"
-                class="flex w-full items-center justify-between gap-2 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                aria-expanded={!collapsed}
-                on:click={() => toggleGroup(group.id)}
-              >
-                <span>{group.label}</span>
-                <ChevronDownIcon
-                  class={cn("size-3 transition-transform", collapsed && "-rotate-90")}
-                />
-              </button>
-            {/if}
-            {#if !collapsed}
-              <ul class="space-y-1">
-                {#each group.items as item}
-                  <li>
-                    <a
-                      href={item.href}
-                      class={cn(
-                        "flex items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground transition",
-                        $navPreferences.denseMode ? "py-1.5" : "py-2",
-                        currentPath.startsWith(item.href)
-                          ? "bg-accent text-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      )}
-                      aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
-                      aria-label={item.label}
-                      title={
-                        $navPreferences.sidebarCollapsed && $navPreferences.enableTooltips
-                          ? item.label
-                          : undefined
-                      }
-                    >
-                      <svelte:component this={item.icon} class="size-4" />
-                      <span class={$navPreferences.sidebarCollapsed ? "sr-only" : "truncate"}
-                        >{item.label}</span
-                      >
-                    </a>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
-          </div>
-        {/each}
-      </div>
+        <div class="flex-1 overflow-y-auto px-2 py-4">
+          <Accordion
+            type="multiple"
+            value={expandedGroups}
+            onValueChange={handleGroupChange}
+            class="space-y-2"
+          >
+            {#each navGroups as group}
+              <AccordionItem value={group.id} class="border-0">
+                {#if $navPreferences.showGroupHeadings && !$navPreferences.sidebarCollapsed}
+                  <AccordionTrigger
+                    class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:no-underline"
+                  >
+                    <span>{group.label}</span>
+                  </AccordionTrigger>
+                {/if}
+                <AccordionContent class={$navPreferences.showGroupHeadings ? "pb-2" : "pb-0"}>
+                  <ul class="space-y-1">
+                    {#each group.items as item}
+                      <li>
+                        <a
+                          href={item.href}
+                          class={cn(
+                            "flex items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground transition",
+                            $navPreferences.denseMode ? "py-1.5" : "py-2",
+                            currentPath.startsWith(item.href)
+                              ? "bg-accent text-foreground"
+                              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          )}
+                          aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
+                          aria-label={item.label}
+                          title={
+                            $navPreferences.sidebarCollapsed && $navPreferences.enableTooltips
+                              ? item.label
+                              : undefined
+                          }
+                        >
+                          <svelte:component this={item.icon} class="size-4" />
+                          <span class={$navPreferences.sidebarCollapsed ? "sr-only" : "truncate"}
+                            >{item.label}</span
+                          >
+                        </a>
+                      </li>
+                    {/each}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            {/each}
+          </Accordion>
+        </div>
 
       <div class="border-t border-border px-3 py-3">
         <div
           class={cn(
             "flex items-center gap-2",
-            $navPreferences.sidebarCollapsed ? "justify-center" : "justify-between"
+            $navPreferences.sidebarCollapsed ? "justify-center" : "justify-between",
+            isRightDock && "flex-row-reverse"
           )}
         >
           <a

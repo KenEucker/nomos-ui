@@ -141,8 +141,8 @@
 
 .nomos-nav {
   position: sticky;
-  top: var(--nomos-header-height, 72px);
-  height: calc(100svh - var(--nomos-header-height, 72px));
+  top: 0;
+  height: calc(100svh - var(--nomos-header-height, 0px));
   border-inline-end: 1px solid var(--border);
 }
 
