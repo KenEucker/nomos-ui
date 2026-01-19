@@ -6,7 +6,10 @@ const { subject } = Astro.props as {
 }
 ---
 
-<div class="admin-layout min-h-screen bg-background text-foreground flex flex-col" style="--nomos-header-height: 72px;">
+<div
+  class="admin-layout min-h-screen bg-background text-foreground flex flex-col"
+  style="--nomos-header-height: 72px; --nomos-header-offset: var(--nomos-header-height, 72px);"
+>
   <header class="border-b border-border bg-card">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
       <div>
@@ -36,3 +39,37 @@ const { subject } = Astro.props as {
     </main>
   </div>
 </div>
+
+<script type="module">
+  const container = document.querySelector(".admin-layout")
+  const headerEl = container?.querySelector("header")
+
+  if (container && headerEl) {
+    let frame = 0
+    let lastOffset = -1
+
+    const clamp = (min, max, value) => Math.min(max, Math.max(min, value))
+
+    const updateOffset = () => {
+      frame = 0
+      const rect = headerEl.getBoundingClientRect()
+      const headerHeight = rect.height
+      const offset = clamp(0, headerHeight, rect.bottom)
+
+      if (offset !== lastOffset) {
+        // --nomos-header-offset shrinks as the header scrolls out, letting the nav grow upward.
+        container.style.setProperty("--nomos-header-offset", `${offset}px`)
+        lastOffset = offset
+      }
+    }
+
+    const scheduleUpdate = () => {
+      if (frame) return
+      frame = requestAnimationFrame(updateOffset)
+    }
+
+    updateOffset()
+    window.addEventListener("scroll", scheduleUpdate, { passive: true })
+    window.addEventListener("resize", scheduleUpdate)
+  }
+</script>
