@@ -263,5 +263,5 @@ export type ResourceDefinition = ResourceLabels & {
 
 export type ResourceDefinitionPartial = Partial<Omit<ResourceDefinition, "name" | "endpoints">> & {
   name: string
-  endpoints: ResourceEndpoints
+  endpoints: Partial<ResourceEndpoints>
 }

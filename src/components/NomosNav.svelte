@@ -294,24 +294,13 @@
         {/each}
       </div>
 
-      <div class="border-t border-border px-3 py-3">
+      <div class="border-t border-border py-3">
         <div
           class={cn(
-            "flex items-center gap-2",
+            "flex items-center",
             $navPreferences.sidebarCollapsed ? "justify-center" : "justify-between"
           )}
         >
-          <a
-            href="/admin/logout"
-            class={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground",
-              $navPreferences.sidebarCollapsed && "justify-center"
-            )}
-            aria-label="Log out"
-          >
-            <LogOutIcon class="size-4" />
-            <span class={$navPreferences.sidebarCollapsed ? "sr-only" : undefined}>Log out</span>
-          </a>
           <button
             type="button"
             class={cn(
@@ -328,6 +317,17 @@
               <SunIcon class="size-4" />
             {/if}
           </button>
+          <a
+            href="/admin/logout"
+            class={cn(
+              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground",
+              $navPreferences.sidebarCollapsed && "justify-center"
+            )}
+            aria-label="Log out"
+          >
+            <LogOutIcon class="size-4" />
+            <span class={$navPreferences.sidebarCollapsed ? "sr-only" : undefined}>Log out</span>
+          </a>
         </div>
       </div>
     {/if}
