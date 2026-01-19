@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte"
   import { buttonVariants } from "$ui/button"
   import { Switch } from "$ui/switch"
   import type { NavPreferences } from "$lib/navPreferences"
@@ -101,9 +102,20 @@
 
   let isDirty = false
   let themeIsDark = false
+  let isMobile = false
 
   $: isDirty = JSON.stringify(saved) !== JSON.stringify(draft) || savedTheme !== draftTheme
   $: themeIsDark = getEffectiveTheme(draftTheme) === "dark"
+
+  onMount(() => {
+    const media = window.matchMedia("(max-width: 768px)")
+    const update = () => {
+      isMobile = media.matches
+    }
+    update()
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
+  })
 </script>
 
 <div class="flex h-full flex-col">
@@ -160,78 +172,81 @@
         <div class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Docking
         </div>
-        <div class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-          <div class="flex items-center gap-2">
-            <MonitorIcon class="size-4 text-muted-foreground" />
-            <span class="text-sm">Desktop dock</span>
+        {#if !isMobile}
+          <div class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+            <div class="flex items-center gap-2">
+              <MonitorIcon class="size-4 text-muted-foreground" />
+              <span class="text-sm">Desktop dock</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class={cn(
+                  buttonVariants({
+                    variant: draft.desktopDock === "left" ? "secondary" : "outline",
+                    size: "icon-sm",
+                  })
+                )}
+                aria-label="Dock sidebar left"
+                aria-pressed={draft.desktopDock === "left"}
+                on:click={() => updateDraft({ desktopDock: "left" })}
+              >
+                <PanelLeftIcon class="size-4" />
+              </button>
+              <button
+                type="button"
+                class={cn(
+                  buttonVariants({
+                    variant: draft.desktopDock === "right" ? "secondary" : "outline",
+                    size: "icon-sm",
+                  })
+                )}
+                aria-label="Dock sidebar right"
+                aria-pressed={draft.desktopDock === "right"}
+                on:click={() => updateDraft({ desktopDock: "right" })}
+              >
+                <PanelRightIcon class="size-4" />
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class={cn(
-                buttonVariants({
-                  variant: draft.desktopDock === "left" ? "secondary" : "outline",
-                  size: "icon-sm",
-                })
-              )}
-              aria-label="Dock sidebar left"
-              aria-pressed={draft.desktopDock === "left"}
-              on:click={() => updateDraft({ desktopDock: "left" })}
-            >
-              <PanelLeftIcon class="size-4" />
-            </button>
-            <button
-              type="button"
-              class={cn(
-                buttonVariants({
-                  variant: draft.desktopDock === "right" ? "secondary" : "outline",
-                  size: "icon-sm",
-                })
-              )}
-              aria-label="Dock sidebar right"
-              aria-pressed={draft.desktopDock === "right"}
-              on:click={() => updateDraft({ desktopDock: "right" })}
-            >
-              <PanelRightIcon class="size-4" />
-            </button>
+        {:else}
+          <div class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+            <div class="flex items-center gap-2">
+              <SmartphoneIcon class="size-4 text-muted-foreground" />
+              <span class="text-sm">Mobile dock</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class={cn(
+                  buttonVariants({
+                    variant: draft.mobileDock === "top" ? "secondary" : "outline",
+                    size: "icon-sm",
+                  })
+                )}
+                aria-label="Dock menu to top"
+                aria-pressed={draft.mobileDock === "top"}
+                on:click={() => updateDraft({ mobileDock: "top" })}
+              >
+                <ArrowUpIcon class="size-4" />
+              </button>
+              <button
+                type="button"
+                class={cn(
+                  buttonVariants({
+                    variant: draft.mobileDock === "bottom" ? "secondary" : "outline",
+                    size: "icon-sm",
+                  })
+                )}
+                aria-label="Dock menu to bottom"
+                aria-pressed={draft.mobileDock === "bottom"}
+                on:click={() => updateDraft({ mobileDock: "bottom" })}
+              >
+                <ArrowDownIcon class="size-4" />
+              </button>
+            </div>
           </div>
-        </div>
-        <div class="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-          <div class="flex items-center gap-2">
-            <SmartphoneIcon class="size-4 text-muted-foreground" />
-            <span class="text-sm">Mobile dock</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class={cn(
-                buttonVariants({
-                  variant: draft.mobileDock === "top" ? "secondary" : "outline",
-                  size: "icon-sm",
-                })
-              )}
-              aria-label="Dock menu to top"
-              aria-pressed={draft.mobileDock === "top"}
-              on:click={() => updateDraft({ mobileDock: "top" })}
-            >
-              <ArrowUpIcon class="size-4" />
-            </button>
-            <button
-              type="button"
-              class={cn(
-                buttonVariants({
-                  variant: draft.mobileDock === "bottom" ? "secondary" : "outline",
-                  size: "icon-sm",
-                })
-              )}
-              aria-label="Dock menu to bottom"
-              aria-pressed={draft.mobileDock === "bottom"}
-              on:click={() => updateDraft({ mobileDock: "bottom" })}
-            >
-              <ArrowDownIcon class="size-4" />
-            </button>
-          </div>
-        </div>
+        {/if}
       </div>
 
       <div class="space-y-3">
@@ -259,24 +274,45 @@
   {:else}
     <div class="flex-1 overflow-y-auto px-3 py-4">
       <div class="flex flex-wrap items-center justify-between gap-2 sm:grid sm:grid-cols-2 sm:gap-3">
-        <button
-          type="button"
-          class={
-            draft.desktopDock === "left"
-              ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
-              : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
-          }
-          aria-label={`Desktop dock ${draft.desktopDock === "left" ? "left" : "right"}`}
-          aria-pressed={draft.desktopDock === "left"}
-          on:click={toggleDesktopDock}
-        >
-          {#if draft.desktopDock === "left"}
-            <PanelLeftIcon class="size-5" />
-          {:else}
-            <PanelRightIcon class="size-5" />
-          {/if}
-          <span class="hidden text-[10px] text-muted-foreground sm:block">Desktop dock</span>
-        </button>
+        {#if !isMobile}
+          <button
+            type="button"
+            class={
+              draft.desktopDock === "left"
+                ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
+                : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
+            }
+            aria-label={`Desktop dock ${draft.desktopDock === "left" ? "left" : "right"}`}
+            aria-pressed={draft.desktopDock === "left"}
+            on:click={toggleDesktopDock}
+          >
+            {#if draft.desktopDock === "left"}
+              <PanelLeftIcon class="size-5" />
+            {:else}
+              <PanelRightIcon class="size-5" />
+            {/if}
+            <span class="hidden text-[10px] text-muted-foreground sm:block">Desktop dock</span>
+          </button>
+        {:else}
+          <button
+            type="button"
+            class={
+              draft.mobileDock === "top"
+                ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
+                : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
+            }
+            aria-label={`Mobile dock ${draft.mobileDock === "top" ? "top" : "bottom"}`}
+            aria-pressed={draft.mobileDock === "top"}
+            on:click={toggleMobileDock}
+          >
+            {#if draft.mobileDock === "top"}
+              <ArrowUpIcon class="size-5" />
+            {:else}
+              <ArrowDownIcon class="size-5" />
+            {/if}
+            <span class="hidden text-[10px] text-muted-foreground sm:block">Mobile dock</span>
+          </button>
+        {/if}
         <button
           type="button"
           class={
@@ -294,24 +330,6 @@
             <SunIcon class="size-5" />
           {/if}
           <span class="hidden text-[10px] text-muted-foreground sm:block">Theme</span>
-        </button>
-        <button
-          type="button"
-          class={
-            draft.mobileDock === "top"
-              ? "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border bg-accent px-3 py-4 text-sm font-medium sm:flex-none"
-              : "flex flex-1 flex-col items-center gap-2 rounded-xl border border-border px-3 py-4 text-sm sm:flex-none"
-          }
-          aria-label={`Mobile dock ${draft.mobileDock === "top" ? "top" : "bottom"}`}
-          aria-pressed={draft.mobileDock === "top"}
-          on:click={toggleMobileDock}
-        >
-          {#if draft.mobileDock === "top"}
-            <ArrowUpIcon class="size-5" />
-          {:else}
-            <ArrowDownIcon class="size-5" />
-          {/if}
-          <span class="hidden text-[10px] text-muted-foreground sm:block">Mobile dock</span>
         </button>
         {#each toggles as toggle}
           <button
