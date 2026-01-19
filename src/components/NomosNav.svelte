@@ -312,10 +312,10 @@
           </Accordion>
         </div>
 
-      <div class="border-t border-border px-3 py-3">
+      <div class="border-t border-border py-3">
         <div
           class={cn(
-            "flex items-center gap-2",
+            "flex items-center",
             $navPreferences.sidebarCollapsed ? "justify-center" : "justify-between",
             isRightDock && "flex-row-reverse"
           )}

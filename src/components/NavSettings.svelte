@@ -7,10 +7,11 @@
   import { cn } from "$lib/utils.js"
   import ArrowLeftIcon from "@lucide/svelte/icons/arrow-left"
   import CheckIcon from "@lucide/svelte/icons/check"
+  import ChartBarDecreasing from "@lucide/svelte/icons/chart-bar-decreasing"
   import PanelLeftIcon from "@lucide/svelte/icons/panel-left"
   import PanelRightIcon from "@lucide/svelte/icons/panel-right"
-  import ArrowUpIcon from "@lucide/svelte/icons/arrow-up"
-  import ArrowDownIcon from "@lucide/svelte/icons/arrow-down"
+  import BookUp from "@lucide/svelte/icons/book-up"
+  import BookDown from "@lucide/svelte/icons/book-down"
   import Rows3Icon from "@lucide/svelte/icons/rows-3"
   import HeadingIcon from "@lucide/svelte/icons/heading-1"
   import MessageCircleIcon from "@lucide/svelte/icons/message-circle"
@@ -47,7 +48,7 @@
       key: "sidebarCollapsed",
       label: "Icon-only sidebar",
       description: "Collapse the menu to icons only.",
-      icon: PanelLeftIcon,
+      icon: ChartBarDecreasing,
     },
     {
       key: "denseMode",
@@ -228,7 +229,7 @@
                 aria-pressed={draft.mobileDock === "top"}
                 on:click={() => updateDraft({ mobileDock: "top" })}
               >
-                <ArrowUpIcon class="size-4" />
+                <BookDown class="size-4" />
               </button>
               <button
                 type="button"
@@ -242,7 +243,7 @@
                 aria-pressed={draft.mobileDock === "bottom"}
                 on:click={() => updateDraft({ mobileDock: "bottom" })}
               >
-                <ArrowDownIcon class="size-4" />
+                <BookUp class="size-4" />
               </button>
             </div>
           </div>
@@ -306,9 +307,9 @@
             on:click={toggleMobileDock}
           >
             {#if draft.mobileDock === "top"}
-              <ArrowUpIcon class="size-5" />
+              <BookDown class="size-5" />
             {:else}
-              <ArrowDownIcon class="size-5" />
+              <BookUp class="size-5" />
             {/if}
             <span class="hidden text-[10px] text-muted-foreground sm:block">Mobile dock</span>
           </button>
