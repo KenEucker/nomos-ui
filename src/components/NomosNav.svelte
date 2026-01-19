@@ -157,7 +157,7 @@
       return !(appliedPrefs.collapsedGroups[group.id] ?? false)
     })
     .map((group) => group.id)
-  $: useCompactMobileNav = isMobile && appliedPrefs.mobileDock === "bottom"
+  $: useCompactMobileNav = isMobile
   $: isRightDock = appliedPrefs.desktopDock === "right" && !isMobile
 </script>
 
