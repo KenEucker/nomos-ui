@@ -141,8 +141,9 @@
 
 .nomos-nav {
   position: sticky;
-  top: 0;
-  height: calc(100svh - var(--nomos-header-height, 0px));
+  /* --nomos-header-offset shrinks with scroll so nav grows upward into header space. */
+  top: var(--nomos-header-offset, var(--nomos-header-height, 72px));
+  height: calc(100vh - var(--nomos-header-offset, var(--nomos-header-height, 72px)));
   border-inline-end: 1px solid var(--border);
 }
 
@@ -190,7 +191,7 @@
   }
 
   .nomos-nav {
-    position: fixed;
+    position: sticky;
     inset-inline: 0;
     bottom: 0;
     top: auto;

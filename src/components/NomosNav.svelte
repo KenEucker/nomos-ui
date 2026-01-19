@@ -250,7 +250,7 @@
           type="button"
           class={cn(
             "rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground",
-            $navPreferences.sidebarCollapsed && "ml-auto"
+            $navPreferences.sidebarCollapsed && (isRightDock ? "mr-auto" : "ml-auto")
           )}
           aria-label="Open screen settings"
           on:click={openSettings}
