@@ -10,6 +10,7 @@
     savePreferences,
     type NavPreferences,
   } from "$lib/navPreferences"
+  import type { NavItem } from "$lib/navigation"
   import {
     applyThemePreference,
     effectiveTheme,
@@ -27,6 +28,8 @@
   import LogOutIcon from "@lucide/svelte/icons/log-out"
   import MoonIcon from "@lucide/svelte/icons/moon"
   import SunIcon from "@lucide/svelte/icons/sun"
+  import ChevronRightIcon from "@lucide/svelte/icons/chevron-right"
+  import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left"
   import {
     Accordion,
     AccordionContent,
@@ -36,26 +39,80 @@
 
   type NavMode = "nav" | "settings"
 
-  const navGroups = [
+  export let navItems: NavItem[] | null = null
+  export let menuName: string = "Nomos Admin"
+  export let menuLogo: string | null = null
+  export let hideHomeMenuItem: boolean = true
+
+  type LocalNavItem = {
+    label: string
+    path: string
+    icon?: string
+    iconComponent?: typeof UsersIcon
+    group?: string
+  }
+
+  const defaultNavGroups: Array<{
+    id: string
+    label: string
+    items: LocalNavItem[]
+  }> = [
     {
       id: "identity",
       label: "Identity",
       items: [
-        { label: "Users", href: "/admin/users", icon: UsersIcon },
-        { label: "Subjects", href: "/admin/subjects", icon: UserRoundIcon },
+        { label: "Users", path: "/admin/users", iconComponent: UsersIcon },
+        { label: "Subjects", path: "/admin/subjects", iconComponent: UserRoundIcon },
       ],
     },
     {
       id: "access",
       label: "Access",
       items: [
-        { label: "Roles", href: "/admin/roles", icon: ShieldIcon },
-        { label: "Permissions", href: "/admin/permissions", icon: KeyIcon },
+        { label: "Roles", path: "/admin/roles", iconComponent: ShieldIcon },
+        { label: "Permissions", path: "/admin/permissions", iconComponent: KeyIcon },
       ],
     },
   ]
 
-  const mobileItems = navGroups.flatMap((group) => group.items)
+  const normalizeNavItems = (items: LocalNavItem[]) => {
+    const grouped = new Map<string, LocalNavItem[]>()
+    const ungrouped: LocalNavItem[] = []
+
+    items.forEach((item) => {
+      if (item.group) {
+        const existing = grouped.get(item.group) ?? []
+        existing.push(item)
+        grouped.set(item.group, existing)
+      } else {
+        ungrouped.push(item)
+      }
+    })
+
+    const groups = Array.from(grouped.entries()).map(([label, items]) => ({
+      id: label,
+      label,
+      items,
+    }))
+
+    if (ungrouped.length) {
+      groups.unshift({ id: "general", label: "General", items: ungrouped })
+    }
+
+    return groups
+  }
+
+  $: resolvedNavItems = ((navItems ?? []) as LocalNavItem[]).filter((item) => {
+    if (!hideHomeMenuItem) return true
+    // Filter out root/home routes (path is "/", "/admin", or any single-segment base path)
+    const normalized = item.path.replace(/\/$/, '') // Remove trailing slash
+    const segments = normalized.split('/').filter(Boolean)
+    // Keep items with more than 1 segment (e.g., "/admin/users"), filter out single segment or empty (e.g., "/" or "/admin")
+    return segments.length > 1
+  })
+  $: navGroups =
+    resolvedNavItems.length > 0 ? normalizeNavItems(resolvedNavItems) : defaultNavGroups
+  $: mobileItems = navGroups.flatMap((group) => group.items)
 
   let mode: NavMode = "nav"
   let draft: NavPreferences = createDraftFromSaved(defaultNavPreferences)
@@ -64,9 +121,6 @@
   let currentPath = ""
   let isMobile = false
   let variant: "form" | "quick" = "form"
-  let expandedGroups: string[] = []
-  let isRightDock = false
-  let useCompactMobileNav = false
 
   const updateDocumentPrefs = (prefs: NavPreferences) => {
     if (typeof document === "undefined") return
@@ -115,6 +169,13 @@
     persistThemePreference(next)
   }
 
+  const toggleSidebarCollapse = () => {
+    savePreferences({
+      ...$navPreferences,
+      sidebarCollapsed: !$navPreferences.sidebarCollapsed,
+    })
+  }
+
   const handleGroupChange = (nextValue: string[] | string) => {
     if ($navPreferences.sidebarCollapsed || !$navPreferences.showGroupHeadings) return
     const nextValues = Array.isArray(nextValue) ? nextValue : [nextValue]
@@ -140,9 +201,19 @@
     update()
     const stopThemeWatch = watchSystemTheme()
     media.addEventListener("change", update)
+
+    // Listen for Swup navigation events to update current path
+    const handleSwupNavigation = () => {
+      currentPath = window.location.pathname
+    }
+    document.addEventListener("swup:contentReplaced", handleSwupNavigation)
+    document.addEventListener("swup:pageView", handleSwupNavigation)
+
     return () => {
       media.removeEventListener("change", update)
       stopThemeWatch()
+      document.removeEventListener("swup:contentReplaced", handleSwupNavigation)
+      document.removeEventListener("swup:pageView", handleSwupNavigation)
     }
   })
 
@@ -150,7 +221,7 @@
 
   $: appliedPrefs = mode === "settings" ? draft : $navPreferences
   $: updateDocumentPrefs(appliedPrefs)
-  $: variant = isMobile || appliedPrefs.sidebarCollapsed ? "quick" : "form"
+  $: variant = (mode === "settings" && (isMobile || appliedPrefs.sidebarCollapsed)) ? "quick" : (isMobile ? "quick" : "form")
   $: expandedGroups = navGroups
     .filter((group) => {
       if (appliedPrefs.sidebarCollapsed || !appliedPrefs.showGroupHeadings) return true
@@ -159,69 +230,89 @@
     .map((group) => group.id)
   $: useCompactMobileNav = isMobile
   $: isRightDock = appliedPrefs.desktopDock === "right" && !isMobile
+  $: logoInitial = menuName.charAt(0).toUpperCase()
 </script>
 
   <nav
     class={cn(
-      "nomos-nav bg-card text-card-foreground flex h-full min-h-0 flex-col",
-      $navPreferences.sidebarCollapsed && mode === "nav" ? "items-center" : "items-stretch"
+      "nomos-nav bg-card text-card-foreground flex min-h-0 flex-col md:h-full",
+      appliedPrefs.sidebarCollapsed ? "items-center" : "items-stretch"
     )}
     aria-label="Nomos admin navigation"
   >
   {#if mode === "nav"}
     {#if useCompactMobileNav}
-      <div class="flex-1">
-        <ul class="flex items-center justify-around gap-2 px-2 py-2">
+      <div class="w-full h-full overflow-x-scroll">
+        <ul class="flex items-center h-full gap-2 px-2 py-2 min-w-max">
+          <li class="flex-shrink-0">
+            <a
+              href="/admin"
+              class="flex items-center justify-center px-3 py-2 text-sm font-medium transition rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+              aria-label="Home"
+            >
+              {#if menuLogo}
+                <img src={menuLogo} alt={menuName} class="object-contain size-6" />
+              {:else}
+                <div class="flex items-center justify-center text-base font-bold size-6">
+                  {logoInitial}
+                </div>
+              {/if}
+            </a>
+          </li>
           {#each mobileItems as item}
-            <li class="flex-1">
+            <li class="flex-shrink-0">
               <a
-                href={item.href}
+                href={item.path}
                 class={cn(
                   "flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition",
-                  currentPath.startsWith(item.href)
+                  currentPath.startsWith(item.path)
                     ? "bg-accent text-foreground"
                     : "hover:bg-accent hover:text-foreground"
                 )}
-                aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
+                aria-current={currentPath.startsWith(item.path) ? "page" : undefined}
                 aria-label={item.label}
               >
-                <svelte:component this={item.icon} class="size-4" />
-                <span class="sr-only">{item.label}</span>
-              </a>
-            </li>
+                {#if item.iconComponent}
+                        <svelte:component this={item.iconComponent} class="size-5" />
+                      {:else}
+                        <span class="size-5 text-foreground" aria-hidden="true">{@html item.icon}</span>
+                      {/if}
+                      <span class="sr-only">{item.label}</span>
+                    </a>
+                  </li>
           {/each}
-          <li class="flex-1">
+          <li class="flex-shrink-0">
             <button
               type="button"
-              class="flex w-full items-center justify-center rounded-md px-3 py-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              class="flex items-center justify-center px-3 py-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Open screen settings"
               on:click={openSettings}
             >
-              <SettingsIcon class="size-4" />
+              <SettingsIcon class="size-5" />
             </button>
           </li>
-          <li class="flex-1">
+          <li class="flex-shrink-0">
             <button
               type="button"
-              class="flex w-full items-center justify-center rounded-md px-3 py-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              class="flex items-center justify-center px-3 py-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label={`Switch to ${$effectiveTheme === "dark" ? "light" : "dark"} mode`}
               aria-pressed={$effectiveTheme === "dark"}
               on:click={toggleTheme}
             >
               {#if $effectiveTheme === "dark"}
-                <MoonIcon class="size-4" />
+                <MoonIcon class="size-5" />
               {:else}
-                <SunIcon class="size-4" />
+                <SunIcon class="size-5" />
               {/if}
             </button>
           </li>
-          <li class="flex-1">
+          <li class="flex-shrink-0">
             <a
               href="/admin/logout"
-              class="flex items-center justify-center rounded-md px-3 py-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              class="flex items-center justify-center px-3 py-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Log out"
             >
-              <LogOutIcon class="size-4" />
+              <LogOutIcon class="size-5" />
               <span class="sr-only">Log out</span>
             </a>
           </li>
@@ -230,38 +321,70 @@
     {:else}
         <div
           class={cn(
-            "flex items-center justify-between gap-2 border-b border-border px-3 py-3",
-            $navPreferences.sidebarCollapsed && "w-full",
-            isRightDock && "flex-row-reverse"
+            "flex items-center gap-2 border-b border-border px-3 py-3",
+            $navPreferences.sidebarCollapsed ? "flex-col w-full" : "justify-between",
+            isRightDock && !$navPreferences.sidebarCollapsed && "flex-row-reverse"
           )}
         >
-          <div
+          <a
+            href="/admin"
             class={cn(
-              "flex items-center gap-2",
+              "flex items-center gap-2 transition hover:opacity-80",
               $navPreferences.sidebarCollapsed && "justify-center w-full"
             )}
+            aria-label="Home"
           >
-          <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
-            N
-          </div>
+          {#if menuLogo}
+            <img src={menuLogo} alt={menuName} class="object-contain rounded-lg size-8" />
+          {:else}
+            <div class="flex items-center justify-center text-sm font-semibold rounded-lg size-8 bg-primary text-primary-foreground">
+              {logoInitial}
+            </div>
+          {/if}
           <span class={cn("text-sm font-semibold", $navPreferences.sidebarCollapsed && "sr-only")}
-            >Nomos Admin</span
+            >{menuName}</span
           >
-        </div>
-        <button
-          type="button"
-          class={cn(
-            "rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground",
-            $navPreferences.sidebarCollapsed && (isRightDock ? "mr-auto" : "ml-auto")
-          )}
-          aria-label="Open screen settings"
-          on:click={openSettings}
-        >
-          <SettingsIcon class="size-4" />
-        </button>
+        </a>
+        {#if !$navPreferences.sidebarCollapsed}
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="p-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label="Collapse to icon-only mode"
+              on:click={toggleSidebarCollapse}
+            >
+              <ChevronLeftIcon class="size-4" />
+            </button>
+            <button
+              type="button"
+              class="p-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label="Open screen settings"
+              on:click={openSettings}
+            >
+              <SettingsIcon class="size-4" />
+            </button>
+          </div>
+        {:else}
+          <button
+            type="button"
+            class="flex items-center justify-center w-full p-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Expand to full width mode"
+            on:click={toggleSidebarCollapse}
+          >
+            <ChevronRightIcon class="size-5" />
+          </button>
+          <button
+            type="button"
+            class="flex items-center justify-center w-full p-2 transition rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Open screen settings"
+            on:click={openSettings}
+          >
+            <SettingsIcon class="size-5" />
+          </button>
+        {/if}
       </div>
 
-        <div class="flex-1 overflow-y-auto px-2 py-4">
+        <div class="flex-1 px-2 py-4 overflow-y-auto">
           <Accordion
             type="multiple"
             value={expandedGroups}
@@ -272,7 +395,7 @@
               <AccordionItem value={group.id} class="border-0">
                 {#if $navPreferences.showGroupHeadings && !$navPreferences.sidebarCollapsed}
                   <AccordionTrigger
-                    class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:no-underline"
+                    class="px-2 py-2 text-xs font-semibold tracking-wide uppercase text-muted-foreground hover:no-underline"
                   >
                     <span>{group.label}</span>
                   </AccordionTrigger>
@@ -282,15 +405,16 @@
                     {#each group.items as item}
                       <li>
                         <a
-                          href={item.href}
+                          href={item.path}
                           class={cn(
-                            "flex items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground transition",
+                            "flex items-center gap-3 rounded-md text-sm font-medium text-foreground transition",
+                            $navPreferences.sidebarCollapsed ? "justify-center px-2 py-3" : "px-3",
                             $navPreferences.denseMode ? "py-1.5" : "py-2",
-                            currentPath.startsWith(item.href)
+                            currentPath.startsWith(item.path)
                               ? "bg-accent text-foreground"
                               : "text-muted-foreground hover:bg-accent hover:text-foreground"
                           )}
-                          aria-current={currentPath.startsWith(item.href) ? "page" : undefined}
+                          aria-current={currentPath.startsWith(item.path) ? "page" : undefined}
                           aria-label={item.label}
                           title={
                             $navPreferences.sidebarCollapsed && $navPreferences.enableTooltips
@@ -298,8 +422,11 @@
                               : undefined
                           }
                         >
-                          <svelte:component this={item.icon} class="size-4" />
-                          <span class={$navPreferences.sidebarCollapsed ? "sr-only" : "truncate"}
+                          {#if item.iconComponent}
+                            <svelte:component this={item.iconComponent} class={$navPreferences.sidebarCollapsed ? "size-6" : "size-4"} />
+                          {:else}
+                            <span class={cn($navPreferences.sidebarCollapsed ? "size-6" : "size-4", "text-foreground")} aria-hidden="true">{@html item.icon}</span>
+                          {/if}                          <span class={$navPreferences.sidebarCollapsed ? "sr-only" : "truncate"}
                             >{item.label}</span
                           >
                         </a>
@@ -312,39 +439,39 @@
           </Accordion>
         </div>
 
-      <div class="border-t border-border py-3">
+      <div class="py-3 border-t border-border">
         <div
           class={cn(
             "flex items-center",
-            $navPreferences.sidebarCollapsed ? "justify-center" : "justify-between",
-            isRightDock && "flex-row-reverse"
+            $navPreferences.sidebarCollapsed ? "flex-col gap-2" : "justify-between",
+            isRightDock && !$navPreferences.sidebarCollapsed && "flex-row-reverse"
           )}
         >
           <a
             href="/admin/logout"
             class={cn(
               "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground",
-              $navPreferences.sidebarCollapsed && "justify-center"
+              $navPreferences.sidebarCollapsed && "justify-center w-full"
             )}
             aria-label="Log out"
           >
-            <LogOutIcon class="size-4" />
+            <LogOutIcon class={$navPreferences.sidebarCollapsed ? "size-5" : "size-4"} />
             <span class={$navPreferences.sidebarCollapsed ? "sr-only" : undefined}>Log out</span>
           </a>
           <button
             type="button"
             class={cn(
               "rounded-md p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground",
-              $navPreferences.sidebarCollapsed && "ml-0"
+              $navPreferences.sidebarCollapsed && "w-full"
             )}
             aria-label={`Switch to ${$effectiveTheme === "dark" ? "light" : "dark"} mode`}
             aria-pressed={$effectiveTheme === "dark"}
             on:click={toggleTheme}
           >
             {#if $effectiveTheme === "dark"}
-              <MoonIcon class="size-4" />
+              <MoonIcon class={$navPreferences.sidebarCollapsed ? "size-5" : "size-4"} />
             {:else}
-              <SunIcon class="size-4" />
+              <SunIcon class={$navPreferences.sidebarCollapsed ? "size-5" : "size-4"} />
             {/if}
           </button>
         </div>
